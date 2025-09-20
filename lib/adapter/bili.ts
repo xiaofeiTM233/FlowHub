@@ -77,7 +77,6 @@ export async function biliPublish(account: any, contents: any, images: any): Pro
   const content = { dyn_req: { content: { contents: [] }, pics: [], scene: 2/*, "attach_card": null, "upload_id": "646195980_1745233460_9967"*/, meta: { app_meta: { from: 'create.dynamic.web', mobi_app: 'web' } } } };
   content.dyn_req.content.contents = contents;
   content.dyn_req.pics = images;
-  console.log('biliPublish content:', JSON.stringify(content));
 
   // 发送 POST 请求到 B站动态发布接口
   const response = await axios({
