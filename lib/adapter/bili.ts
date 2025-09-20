@@ -17,7 +17,7 @@ export interface biliPublishApi {
 }
 
 /**
- * biliUpload
+ * biliUpload ｜ 上传B站图床
  * @param account 账号对象
  * @param base64 图片的 base64 字符串
  * @returns Bilibili 接口返回的 data 字段
@@ -62,7 +62,7 @@ export async function biliUpload(account: any, base64: string): Promise<biliUplo
 }
 
 /**
- * 发布B站动态
+ * biliPublish ｜ 发布B站动态
  * @param account 账号对象
  * @param contents 动态内容对象
  * @param images 图片数组
@@ -97,7 +97,7 @@ export async function biliPublish(account: any, contents: any, images: any): Pro
 }
 
 /**
- * 删除B站动态
+ * biliDelete ｜ 删除B站动态
  * @param account 账号对象
  * @param dyn_id_str 动态ID字符串
  * @returns Bilibili 接口返回的 data 字段
@@ -121,12 +121,12 @@ export async function biliDelete(account: any, dyn_id_str: string): Promise<any>
 }
 
 /**
- * 封装：上传图片并发布动态
+ * biliPlus ｜ 封装：上传+发布
  * @param account 账号对象
- * @param content { text: string, images: string[] }
+ * @param content 帖子内容
  * @returns 发布结果
  */
-export async function biliPlus(account: any, content: { text: string, images?: string[] }) {
+export async function biliPlus(account: any, content: any) {
   try {
     const pics = [];
     if (content.images && content.images.length > 0) {
