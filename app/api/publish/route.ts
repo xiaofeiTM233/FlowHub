@@ -57,6 +57,7 @@ export async function POST(request: Request) {
   // 3. 更新数据库中帖子
   post.type = 'published';
   post.results = results;
+  post.markModified && post.markModified('results');
   await post.save();
   // 4. 返回处理结果
   return Response.json({ code: 0, message: "success", data: results }, { status: 200 });
