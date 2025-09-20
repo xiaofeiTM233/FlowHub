@@ -121,6 +121,39 @@ export async function biliDelete(account: any, dyn_id_str: string): Promise<any>
 }
 
 /**
+ * biliStat ｜ 获取B站创作中心数据
+ * @param account 账号对象
+ * @returns 返回统计数据
+ */
+export async function biliStat(account: any): Promise<any> {
+  try {
+    const cookies = Object.entries(account.cookies).map(([key, value]) => `${key}=${value}`).join('; ');
+    const [videoStat, articleStat] = await Promise.all([
+      axios.get('https://member.bilibili.com/x/web/data/index/stat', {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36',
+          'Cookie': cookies
+        }
+      }),
+      axios.get('https://member.bilibili.com/x/web/data/article', {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36',
+          'Cookie': cookies
+        }
+      })
+    ]);
+    let result = {
+      video: videoStat.data.data,
+      article: articleStat.data.data
+    };
+    delete result.video.fan_recent_thirty;
+    return result;
+  } catch (error: any) {
+    return { error: error.message };
+  }
+}
+
+/**
  * biliPlus ｜ 封装：上传+发布
  * @param account 账号对象
  * @param content 帖子内容
