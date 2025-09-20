@@ -1,36 +1,20 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
-## Getting Started
+！正在开发中！
 
-First, run the development server:
+# FlowHub
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+基于Next.js开发的多平台内容分发平台，新媒体创作者的跨平台发布效率工具。
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+纯兴趣作品，不确保长期维护更新，如果你愿意与我交流分享，请[与我联系](https://github.com/xiaofeiTM233)！
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## More
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+更多信息请参考[FlowHub项目计划表](https://docs.qq.com/aio/DRm5CRFJabU5YZ29V)。
 
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Thanks
+- [Campux](https://github.com/idoknow/Campux)（灵感来源）
+- [OQQWall](https://github.com/gfhdhytghd/OQQWall)（灵感来源，渲染模板）
+- [Apifox](https://github.com/apifox)（调试工具，好用）
+- [Vercel](https://github.com/vercel)（部署工具，好用）
+- [VScode](https://github.com/microsoft/vscode)（编辑工具，好用）
