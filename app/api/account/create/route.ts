@@ -4,16 +4,16 @@ import Account from '@/models/account';
 
 /**
  * 创建或更新平台账号
- * @param request 包含 platform, aid, uid, cookies 字段的请求体
+ * @param request 包含账号对象的请求体
  * @returns 操作结果及平台账号对象
  */
 export async function POST(request: Request) {
   await dbConnect();
-  const { platform, aid, uid, cookies } = await request.json();
+  const { platform, aid, auth, uid, cookies, stats } = await request.json();
 
   const theAccount = await Account.findOneAndUpdate(
     { aid },
-    { platform, aid, uid, cookies },
+    { platform, aid, auth, uid, cookies, stats },
     {
       new: true,
       upsert: true,

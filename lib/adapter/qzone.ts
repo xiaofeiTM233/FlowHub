@@ -1,4 +1,6 @@
+// lib/adapter/qzone.ts
 import axios from 'axios';
+import Account from '@/models/account';
 
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36';
 
@@ -24,6 +26,7 @@ export async function qzoneStat(account: any): Promise<any> {
     delete result.items;
     return { code: 0, message: `今日浏览量为：${result.todaycount}`, data: result };
   } catch (err: any) {
+    await qqCookies(account.aid);
     return { code: -1, message: '出现错误: ' + (err.message || err) };
   }
 }
@@ -37,6 +40,11 @@ export async function qzoneStat(account: any): Promise<any> {
  */
 export async function qzoneBlock(account: any, act_uin: string, action: '1' | '2' = '1'): Promise<any> {
   try {
+    // 检查在线
+    const stat = await qzoneStat(account);
+    if (stat.code !== 0) {
+      account = await qqCookies(account.aid);
+    }
     // 账号基本信息
     const uid = account.uid;
     const g_tk = account.cookies.g_tk;
@@ -201,6 +209,11 @@ export async function qzonePublish(account: any, pics: any[], con: string, ugc_r
  */
 export async function qzoneDelete(account: any, tid: string): Promise<any> {
   try {
+    // 检查在线
+    const stat = await qzoneStat(account);
+    if (stat.code !== 0) {
+      account = await qqCookies(account.aid);
+    }
     // 账号基本信息
     const uid = account.uid;
     const g_tk = account.cookies.g_tk;
@@ -238,15 +251,53 @@ export async function qzoneDelete(account: any, tid: string): Promise<any> {
  */
 export async function qzonePlus(account: any, content: { text: string, images: string[] }) {
   try {
+    // 检查在线
+    const stat = await qzoneStat(account);
+    if (stat.code !== 0) {
+      account = await qqCookies(account.aid);
+    }
     const pics = [];
-        if (content.images && content.images.length > 0) {
-            for (const image of content.images) {
-                pics.push(await qzoneUpload(account, image));
-            }
-        }
+    if (content.images && content.images.length > 0) {
+      for (const image of content.images) {
+        pics.push(await qzoneUpload(account, image));
+      }
+    }
     const data = await qzonePublish(account, pics, content.text);
     return { platform: 'qzone', status: 'success', data };
   } catch (error: any) {
     return { platform: 'qzone', status: 'error', message: error.message };
   }
+}
+
+/**
+ * qqCookies | 通过API获取cookies并更新account
+ * @param account 账号对象
+ * @param token access_token
+ * @returns 更新后的cookies对象
+ */
+export async function qqCookies(account: any): Promise<any> {
+	try {
+    if (!account.auth) { return account } // 不支持则不更新
+		const resp = await axios.get(`${account.auth.url}?access_token=${account.auth.token}&domain=user.qzone.qq.com`, { headers: { 'User-Agent': UA } });
+		const cookiesStr = resp.data.data.cookies;
+		let qqcookies: any = {};
+		cookiesStr.split('; ').forEach((c: string) => {
+			const [key, value] = c.split(';')[0].split('=');
+			if (qqcookies[key] === undefined) qqcookies[key] = value;
+		});
+		qqcookies.g_tk = generateGtk(qqcookies.p_skey);
+		await Account.findOneAndUpdate({ aid: account.aid }, { $set: { cookies: qqcookies } });
+    account.cookies = qqcookies;
+		return account;
+	} catch (err: any) {
+		throw new Error('更新QQcookies失败: ' + (err.message || err));
+	}
+}
+
+function generateGtk(skey: string): string {
+	let hashVal = 5381;
+	for (let i = 0; i < skey.length; i++) {
+		hashVal = (hashVal << 5) + hashVal + skey.charCodeAt(i);
+	}
+	return (hashVal & 2147483647).toString();
 }
