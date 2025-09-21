@@ -1,6 +1,6 @@
 // app/api/publish/route.ts
-import { biliDelete, biliStat, biliPlus } from '@/lib/adapter/bili';
-import { qzoneDelete, qzoneBlock, qzonePlus } from '@/lib/adapter/qzone';
+import { biliPlus } from '@/lib/adapter/bili';
+import { qzonePlus } from '@/lib/adapter/qzone';
 import dbConnect from '@/lib/db';
 import Account from '@/models/account';
 import Post from '@/models/posts';
@@ -19,7 +19,7 @@ export async function POST(request: Request) {
   if (body._id) {
     post = await Post.findById(body._id);
     if (!post) {
-      return Response.json({ message: `未找到该帖子` }, { status: 404 });
+      return Response.json({ code: -1, message: `未找到该帖子` }, { status: 404 });
     }
   } else {
     post = new Post({
@@ -38,7 +38,7 @@ export async function POST(request: Request) {
   let results = post.results || {};
   // 已发布则跳过
   if (type === 'published') {
-    return Response.json({ code: 0, message: "published", data: results }, { status: 200 });
+    return Response.json({ code: 1, message: "published", data: results }, { status: 200 });
   }
 
   // 遍历平台发布
