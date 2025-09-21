@@ -1,5 +1,6 @@
 // app/api/publish/route.ts
-import { biliUpload, biliPublish, biliDelete, biliPlus } from '@/lib/adapter/bili';
+import { biliDelete, biliStat, biliPlus } from '@/lib/adapter/bili';
+import { qzoneDelete, qzoneBlock, qzonePlus } from '@/lib/adapter/qzone';
 import dbConnect from '@/lib/db';
 import Account from '@/models/account';
 import Post from '@/models/posts';
@@ -46,11 +47,14 @@ export async function POST(request: Request) {
     if (results[aid]?.status === 'success') continue;
     const account = await Account.findOne({ aid });
 
-    // bili
-    if (account && account.platform === 'bili') {
-        results[aid] = await biliPlus(account, content);
+    if (account.platform === 'bili') {
+      // bili
+      results[aid] = await biliPlus(account, content);
+    } else if (account.platform === 'qq') {
+      // qzone
+      results[aid] = await qzonePlus(account, content);
     } else {
-        results[aid] = { platform: account.platform, status: 'error', message: '不支持的平台' };
+      results[aid] = { platform: account.platform, status: 'error', message: '不支持的平台' };
     }
   }
 
