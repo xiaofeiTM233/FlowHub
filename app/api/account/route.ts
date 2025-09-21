@@ -11,7 +11,7 @@ import { qzoneStat } from '@/lib/adapter/qzone';
 export async function GET() {
   await dbConnect();
   const accounts = await Account.find();
-  const stats = {};
+  const stats: { [key: string]: any } = {};
   for (const account of accounts) {
     let stat;
     if (account.platform === 'bili') {

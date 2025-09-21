@@ -7,7 +7,7 @@ const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML,
  * @param account 账号对象
  * @returns 今日浏览量字符串
  */
-export async function qzoneStat(account: any): Promise<string> {
+export async function qzoneStat(account: any): Promise<any> {
   try {
     // 账号基本信息
     const uid = account.uid;
@@ -35,7 +35,7 @@ export async function qzoneStat(account: any): Promise<string> {
  * @param action '1'为屏蔽, '2'为取消屏蔽
  * @returns 操作结果字符串
  */
-export async function qzoneBlock(account: any, act_uin: string, action: '1' | '2' = '1'): Promise<string> {
+export async function qzoneBlock(account: any, act_uin: string, action: '1' | '2' = '1'): Promise<any> {
   try {
     // 账号基本信息
     const uid = account.uid;
