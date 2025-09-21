@@ -1,3 +1,4 @@
+// lib/adapter/bili.ts
 import axios from 'axios';
 import FormData from 'form-data';
 
@@ -104,9 +105,9 @@ export async function biliPublish(account: any, contents: any, images: any): Pro
 export async function biliDelete(account: any, dyn_id_str: string): Promise<any> {
   const csrf = account.cookies.bili_jct;
   const cookies = Object.entries(account.cookies).map(([key, value]) => `${key}=${value}`).join('; ');
-  const data = { dyn_id_str, csrf };
+  const data = { dyn_id_str };
   const response = await axios.post(
-    'https://api.bilibili.com/x/dynamic/feed/delete',
+    `https://api.bilibili.com/x/dynamic/feed/operate/remove?csrf=${csrf}`,
     data,
     {
       headers: {
