@@ -50,7 +50,7 @@ export async function POST(request: Request) {
     if (account.platform === 'bili') {
       // bili
       results[aid] = await biliPlus(account, content);
-    } else if (account.platform === 'qq') {
+    } else if (account.platform === 'qzone') {
       // qzone
       results[aid] = await qzonePlus(account, content);
     } else {
