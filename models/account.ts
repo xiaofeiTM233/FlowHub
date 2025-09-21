@@ -6,6 +6,7 @@ const accountSchema = new mongoose.Schema({
   aid: { type: String, required: true, unique: true },
   uid: { type: String, required: true },
   cookies: { type: Object, required: true },
+  stats: { type: Object },
 }, {
   timestamps: true,
   versionKey: false

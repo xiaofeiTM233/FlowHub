@@ -1,16 +1,30 @@
 // app/api/account/route.ts
 import dbConnect from '@/lib/db';
 import Account from '@/models/account';
+import { biliStat } from '@/lib/adapter/bili';
+import { qzoneStat } from '@/lib/adapter/qzone';
 
 /**
- * 获取所有平台账号
+ * 获取并更新所有平台账号的stat
  * @returns 平台账号数组
- *
+ */
 export async function GET() {
   await dbConnect();
   const accounts = await Account.find();
-  return Response.json(accounts);
-}/
+  const stats = {};
+  for (const account of accounts) {
+    let stat;
+    if (account.platform === 'bili') {
+      stat = await biliStat(account);
+    } else if (account.platform === 'qzone') {
+      stat = await qzoneStat(account);
+    }
+    account.stats = stat;
+    await account.save();
+    stats[account.aid] = stat;
+  }
+  return Response.json({ code: 0, message: '已获取并更新所有账号的统计信息', data: stats }, { status: 200 });
+}
 
 /**
  * 更新平台账号

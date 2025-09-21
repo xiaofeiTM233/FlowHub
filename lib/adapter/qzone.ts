@@ -20,7 +20,8 @@ export async function qzoneStat(account: any): Promise<string> {
 
     // 处理响应数据
     const jsondata = response.data.replace('_Callback(', '').slice(0, -3);
-    const result = JSON.parse(jsondata).data;
+    let result = JSON.parse(jsondata).data;
+    delete result.items;
     return { code: 0, message: `今日浏览量为：${result.todaycount}`, data: result };
   } catch (err: any) {
     return { code: -1, message: '出现错误: ' + (err.message || err) };
