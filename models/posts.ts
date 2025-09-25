@@ -2,14 +2,17 @@
 import mongoose from 'mongoose';
 
 const postSchema = new mongoose.Schema({
-  type: { type: String },
-  timestamp: { type: Number },
+  type: { type: String, default: 'draft' },
+  timestamp: { type: Number, default: Date.now },
   sender: {
-    platform: { type: [String], required: true }
+    userid: { type: Number, default: 10000 },
+    nickname: { type: String, default: '昵称' },
+    nick: { type: Boolean, default: false },
+    platform: { type: [String], default: [ process.env.DEFAULT_PLATFORM ] }
   },
   content: {
-    text: { type: String },
-    images: { type: [String] }
+    text: { type: String, default: '' },
+    images: { type: [String], default: [] }
   },
   results: { type: Object }
 }, {
