@@ -57,7 +57,7 @@ export async function render(
     return Buffer.from(result);
 
   } catch (error) {
-    console.error('Puppeteer 渲染出错:', error);
+    console.error('[Render][renderer] Puppeteer 渲染出错:', error);
     throw new Error('渲染 HTML 时出错');
   } finally {
     if (browser) {

@@ -8,7 +8,7 @@ import { pushReview } from '@/lib/review';
 import { render } from '@/lib/renderer'; 
 
 /**
- * 接收投稿数据，存入数据库，并渲染成图片返回
+ * 接收投稿数据，渲染成图片返回或推送审核
  * @param request 包含投稿内容的请求
  * @returns 渲染后的 PNG 图片
  */
@@ -26,6 +26,7 @@ export async function POST(request: Request) {
     if (body.type === 'render') {
       outputType = 'buffer';
     }
+    console.log('[Render] 接收到渲染请求:', outputType);
     // 3. 读取 HTML 模板
     const template = await readFile('./models/template.html', 'utf-8');
     // 4. 调用渲染函数
@@ -38,8 +39,10 @@ export async function POST(request: Request) {
         },
       });
     }
+    // 5. 如果是投稿，创建 Post 文档并推送审核
     let post;
     if (body.type === 'post') {
+      console.log('[Render] 创建投稿并推送审核');
       print.type = 'post';
       post = new Post({ print });
       post.type = 'pending';
@@ -48,6 +51,7 @@ export async function POST(request: Request) {
       await post.save();
       print.rid = post._id;
       await print.save();
+      // 推送审核，感觉应该全部写在review里但是不太好写干脆就这样了
       const messages = { data: [
         {
           "type":"text",
@@ -67,7 +71,7 @@ export async function POST(request: Request) {
       const result = await pushReview(account, messages);
       return Response.json({
         code: 0,
-        message: '渲染完成并已推送至草稿箱待审',
+        message: '渲染完成并已推送待审',
         data: {
           rid: print._id,
           pid: post._id,
@@ -86,7 +90,7 @@ export async function POST(request: Request) {
       }
     });
   } catch (error) {
-    console.error('渲染失败:', error);
+    console.error('[Render] 渲染失败:', error);
     return Response.json(
       { code: -1, message: '服务器内部错误', error: error instanceof Error ? error.message : '发生未知错误' },
       { status: 500 }
