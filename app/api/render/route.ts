@@ -4,8 +4,8 @@ import dbConnect from '@/lib/db';
 import Print from '@/models/print';
 import Post from '@/models/posts';
 import Account from '@/models/account';
-import { pushReview } from '@/lib/review';
-import { render } from '@/lib/renderer'; 
+import { pushReview, GenerateMSG } from '@/lib/review';
+import { render } from '@/lib/renderer';
 
 /**
  * 接收投稿数据，渲染成图片返回或推送审核
@@ -18,8 +18,16 @@ export async function POST(request: Request) {
     await dbConnect();
     const body = await request.json();
     let outputType = 'base64' as 'base64' | 'buffer';
-    // 2. 创建并保存 Print 文档
-    let print = new Print( body );
+    let print;
+    // 1. 根据 _id 查找或创建记录
+    if (body._id) {
+      print = await Print.findById(body._id);
+      if (!print) {
+        return Response.json({ code: -1, message: `未找到该记录` }, { status: 404 });
+      }
+    } else {
+      print = new Print( body );
+    }
     if (!print.timestamp || print.timestamp <= 0) {
       print.timestamp = Date.now();
     }
@@ -52,24 +60,10 @@ export async function POST(request: Request) {
       await post.save();
       print.pid = post._id;
       await print.save();
-      // 推送审核，感觉应该全部写在review里但是不太好写干脆就这样了
-      const messages = { data: [
-        {
-          "type":"text",
-          "data": {
-            "text":`*新投稿待审核：${print.timestamp}\n来自 ${print.sender.nick ? '匿名用户 ' : `${print.sender.nickname}（${print.sender.userid}）`}的投稿\n`
-          }
-        },
-        {
-          "type": "image",
-          "data": {
-            "file":`base64://${image}`
-          }
-        }
-      ] };
+      // 推送审核
       const aid = process.env.REVIEW_PUSH_PLATFORM;
       const account = await Account.findOne({ aid });
-      const result = await pushReview(account, messages);
+      const result = await pushReview(account, print, image);
       return Response.json({
         code: 0,
         message: '渲染完成并已推送待审',

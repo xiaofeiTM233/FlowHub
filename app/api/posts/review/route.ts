@@ -54,7 +54,11 @@ export async function POST(request: Request) {
 
     let result = '';
     let post;
-    post = await Post.findById(pid);
+    if (pid) {
+      post = await Post.findById(pid); 
+    } else if (body.data.timestamp) {
+      post = await Post.findOne({timestamp: body.data.timestamp});
+    }
     if (!post) {
       return Response.json({ code: -1, message: `未找到ID为 ${pid} 的帖子` }, { status: 404 });
     }
