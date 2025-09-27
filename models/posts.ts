@@ -4,7 +4,7 @@ import mongoose from 'mongoose';
 const postSchema = new mongoose.Schema({
   type: { type: String, default: 'draft' },
   timestamp: { type: Number, default: Date.now },
-  rid: { type: String },
+  cid: { type: String },
   sender: {
     userid: { type: Number, default: 10000 },
     nickname: { type: String, default: '昵称' },

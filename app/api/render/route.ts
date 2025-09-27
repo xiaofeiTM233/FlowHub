@@ -46,11 +46,11 @@ export async function POST(request: Request) {
       print.type = 'post';
       post = new Post({ print });
       post.type = 'pending';
-      post.rid = print._id;
+      post.cid = print._id;
       //console.log(post)
       post.content.images.push(image);
       await post.save();
-      print.rid = post._id;
+      print.pid = post._id;
       await print.save();
       // 推送审核，感觉应该全部写在review里但是不太好写干脆就这样了
       const messages = { data: [
@@ -74,7 +74,7 @@ export async function POST(request: Request) {
         code: 0,
         message: '渲染完成并已推送待审',
         data: {
-          rid: print._id,
+          cid: print._id,
           pid: post._id,
           //base64: image,
           result
