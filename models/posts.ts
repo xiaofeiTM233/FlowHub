@@ -9,7 +9,7 @@ const postSchema = new mongoose.Schema({
     userid: { type: Number, default: 10000 },
     nickname: { type: String, default: '昵称' },
     nick: { type: Boolean, default: false },
-    platform: { type: [String], default: [ process.env.DEFAULT_PLATFORM ] }
+    platform: { type: [String], default: (process.env.DEFAULT_PLATFORM || '').split(',') }
   },
   content: {
     text: { type: String, default: '' },

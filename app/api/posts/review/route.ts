@@ -1,6 +1,7 @@
 // app/api/posts/review/route.ts
-import dbConnect from '@/lib/db';
 import Post from '@/models/posts';
+import dbConnect from '@/lib/db';
+import { publish } from '@/lib/publish';
 
 /**
  * 获取帖子的审核信息
@@ -87,13 +88,11 @@ export async function POST(request: Request) {
         break;
       case 'approveforce':
         post.type = 'approved';
-        // 还没写通过逻辑
         post.review.comments.push({mid, reason: `强制通过：${reason}`});
         result = `对帖子 ${pid} 执行：强制通过`;
         break;
       case 'rejectforce':
         post.type = 'rejected';
-        // 还没写拒绝逻辑
         post.review.comments.push({mid, reason: `强制拒绝：${reason}`});
         result = `对帖子 ${pid} 执行：强制拒绝`;
         break;
@@ -112,17 +111,29 @@ export async function POST(request: Request) {
     }
     post.review.stat.approve = post.review.approve.length || 0;
     post.review.stat.reject = post.review.reject.length || 0;
-    if (process.env.APPROVE_NUM && parseInt(process.env.APPROVE_NUM) > 0 && post.review.stat.approve >= parseInt(process.env.APPROVE_NUM)) {
+    if ((process.env.APPROVE_NUM && parseInt(process.env.APPROVE_NUM) > 0 && post.review.stat.approve >= parseInt(process.env.APPROVE_NUM)) ||
+      (process.env.TOTAL_NUM && parseInt(process.env.TOTAL_NUM) > 0 && (post.review.stat.approve - post.review.stat.reject) >= parseInt(process.env.TOTAL_NUM))) {
       post.type = 'approved';
-      // 还没写通过逻辑
     }
     if (process.env.REJECT_NUM && parseInt(process.env.REJECT_NUM) > 0 && post.review.stat.reject >= parseInt(process.env.REJECT_NUM)) {
       post.type = 'rejected';
-      // 还没写拒绝逻辑
     }
-    if (process.env.TOTAL_NUM && parseInt(process.env.TOTAL_NUM) > 0 && (post.review.stat.approve - post.review.stat.reject) >= parseInt(process.env.TOTAL_NUM)) {
-      post.type = 'approved';
-      // 还没写通过逻辑
+
+    let results = post.results || {};
+    // 判断是否直接发布
+    if (post.type === 'approved' && process.env.PUBLISH_TYPE === '1') {
+      console.log(`[Review] 达成发帖条件，发布：${post._id}`)
+      results = await publish(post);
+      // 更新数据库中帖子
+      post.type = 'published';
+      post.results = results;
+      post.markModified && post.markModified('results');
+    }
+
+    // 判断是否被拒绝
+    if (post.type === 'rejected') {
+      console.log(`[Review] 帖子被拒绝：${post._id}`)
+      // 可能后续还要写拒绝后的推送，不过我觉得我应该先完善用户端甚至先做好网页端
     }
     await post.save();
 
@@ -130,7 +141,8 @@ export async function POST(request: Request) {
     return Response.json({
       code: 0,
       message: result,
-      data: post.review
+      data: post.review,
+      ...(results ? { results } : {})
     }, { status: 200 });
 
   } catch (error: any) {

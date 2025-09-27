@@ -1,8 +1,6 @@
 // app/api/publish/route.ts
-import { biliPlus } from '@/lib/adapter/bili';
-import { qzonePlus } from '@/lib/adapter/qzone';
 import dbConnect from '@/lib/db';
-import Account from '@/models/account';
+import { publish } from '@/lib/publish';
 import Post from '@/models/posts';
 
 /**
@@ -32,30 +30,12 @@ export async function POST(request: Request) {
     await post.save();
   }
 
-  const { sender, content, type } = post;
-
   // 2. 遍历平台发布
-  let results = post.results || {};
-  // 已发布则跳过
-  if (type === 'published') {
+  const results = await publish(post);
+  
+  // 如果是已发布状态，直接返回结果
+  if (post.type === 'published') {
     return Response.json({ code: 1, message: "published", data: results }, { status: 200 });
-  }
-
-  // 遍历平台发布
-  for (const aid of sender.platform) {
-    // 已发布则跳过
-    if (results[aid]?.status === 'success') continue;
-    const account = await Account.findOne({ aid });
-
-    if (account.platform === 'bili') {
-      // bili
-      results[aid] = await biliPlus(account, content);
-    } else if (account.platform === 'qzone') {
-      // qzone
-      results[aid] = await qzonePlus(account, content);
-    } else {
-      results[aid] = { platform: account.platform, status: 'error', message: '不支持的平台' };
-    }
   }
 
   // 3. 更新数据库中帖子

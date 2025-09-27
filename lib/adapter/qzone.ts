@@ -293,8 +293,7 @@ export async function qqCookies(account: any): Promise<any> {
 			if (qqcookies[key] === undefined) qqcookies[key] = value;
 		});
 		qqcookies.g_tk = generateGtk(qqcookies.p_skey);
-		const test = await Account.findOneAndUpdate({ aid: account.aid }, { $set: { cookies: qqcookies } });
-    console.log(test);
+		await Account.findOneAndUpdate({ aid: account.aid }, { $set: { cookies: qqcookies } });
     account.cookies = qqcookies;
 		return account;
 	} catch (err: any) {
