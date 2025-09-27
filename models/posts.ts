@@ -4,6 +4,7 @@ import mongoose from 'mongoose';
 const postSchema = new mongoose.Schema({
   type: { type: String, default: 'draft' },
   timestamp: { type: Number, default: Date.now },
+  rid: { type: String },
   sender: {
     userid: { type: Number, default: 10000 },
     nickname: { type: String, default: '昵称' },
@@ -13,6 +14,15 @@ const postSchema = new mongoose.Schema({
   content: {
     text: { type: String, default: '' },
     images: { type: [String], default: [] }
+  },
+  review: {
+    approve: { type: [Object], default: [] },
+    reject: { type: [Object], default: [] },
+    comments: { type: [Object], default: [] },
+    stat : {
+      approve: { type: Number, default: 0 },
+      reject: { type: Number, default: 0 },
+    }
   },
   results: { type: Object }
 }, {

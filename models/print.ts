@@ -4,6 +4,7 @@ import mongoose from 'mongoose';
 const printSchema = new mongoose.Schema({
   type: { type: String, default: 'render' },
   timestamp: { type: Number, default: Date.now },
+  pid: { type: String },
   sender: {
     userid: { type: Number, default: 10000 },
     nickname: { type: String, default: '昵称' },

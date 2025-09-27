@@ -3,7 +3,9 @@ import { readFile } from 'fs/promises';
 import dbConnect from '@/lib/db';
 import Print from '@/models/print';
 import Post from '@/models/posts';
-import { render } from '@/lib/renderer'; // 确保路径正确
+import Account from '@/models/account';
+import { pushReview } from '@/lib/review';
+import { render } from '@/lib/renderer'; 
 
 /**
  * 接收投稿数据，存入数据库，并渲染成图片返回
@@ -21,13 +23,9 @@ export async function POST(request: Request) {
     if (!print.timestamp || print.timestamp <= 0) {
       print.timestamp = Date.now();
     }
-    if (body.type === 'post') {
-      print.type = 'draft';
-    }
     if (body.type === 'render') {
       outputType = 'buffer';
     }
-    await print.save();
     // 3. 读取 HTML 模板
     const template = await readFile('./models/template.html', 'utf-8');
     // 4. 调用渲染函数
@@ -42,19 +40,43 @@ export async function POST(request: Request) {
     }
     let post;
     if (body.type === 'post') {
+      print.type = 'post';
       post = new Post({ print });
+      post.type = 'pending';
+      post.rid = print._id;
       post.content.images.push(image);
       await post.save();
+      print.rid = post._id;
+      await print.save();
+      const messages = { data: [
+        {
+          "type":"text",
+          "data": {
+            "text":`*新投稿待审核：${print.timestamp}\n来自 ${print.sender.nick ? '匿名用户 ' : `${print.sender.nickname}（${print.sender.userid}）`}的投稿\n`
+          }
+        },
+        {
+          "type": "image",
+          "data": {
+            "file":`base64://${image}`
+          }
+        }
+      ] };
+      const aid = process.env.REVIEW_PUSH_PLATFORM;
+      const account = await Account.findOne({ aid });
+      const result = await pushReview(account, messages);
       return Response.json({
         code: 0,
         message: '渲染完成并已推送至草稿箱待审',
         data: {
           rid: print._id,
           pid: post._id,
-          //base64: image
+          //base64: image,
+          result
         }
       });
     }
+    await print.save();
     return Response.json({
       code: 0,
       message: '渲染完成',
