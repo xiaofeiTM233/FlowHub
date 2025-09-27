@@ -10,6 +10,7 @@ const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML,
  * @returns 今日浏览量字符串
  */
 export async function qzoneStat(account: any): Promise<any> {
+  console.log('[Adapter][qzone][qzoneStat]', `获取空间访客-${account.aid}`);
   try {
     // 账号基本信息
     const uid = account.uid;
@@ -26,7 +27,7 @@ export async function qzoneStat(account: any): Promise<any> {
     delete result.items;
     return { code: 0, message: `今日浏览量为：${result.todaycount}`, data: result };
   } catch (err: any) {
-    await qqCookies(account.aid);
+    await qqCookies(account);
     return { code: -1, message: '出现错误: ' + (err.message || err) };
   }
 }
@@ -39,11 +40,12 @@ export async function qzoneStat(account: any): Promise<any> {
  * @returns 操作结果字符串
  */
 export async function qzoneBlock(account: any, act_uin: string, action: '1' | '2' = '1'): Promise<any> {
+  console.log('[Adapter][qzone][qzoneBlock]', `屏蔽空间用户-${account.aid}-${act_uin}`);
   try {
     // 检查在线
     const stat = await qzoneStat(account);
     if (stat.code !== 0) {
-      account = await qqCookies(account.aid);
+      account = await qqCookies(account);
     }
     // 账号基本信息
     const uid = account.uid;
@@ -90,6 +92,7 @@ export async function qzoneBlock(account: any, act_uin: string, action: '1' | '2
  * @returns 上传结果data对象
  */
 export async function qzoneUpload(account: any, base64: string): Promise<any> {
+  console.log('[Adapter][qzone][qzoneUpload]', `上传空间图床-${account.aid}`);
   try {
     // 账号基本信息
     const uid = account.uid;
@@ -148,6 +151,7 @@ export async function qzoneUpload(account: any, base64: string): Promise<any> {
  * @returns 请求状态码或错误信息
  */
 export async function qzonePublish(account: any, pics: any[], con: string, ugc_right: string = '128'): Promise<number | { error: any }> {
+  console.log('[Adapter][qzone][qzonePublish]', `发布空间说说-${account.aid}-${ugc_right}`);
   try {
     // 账号基本信息
     const uid = account.uid;
@@ -208,11 +212,12 @@ export async function qzonePublish(account: any, pics: any[], con: string, ugc_r
  * @returns 删除结果响应数据或错误信息
  */
 export async function qzoneDelete(account: any, tid: string): Promise<any> {
+  console.log('[Adapter][qzone][qzoneDelete]', `删除空间说说-${account.aid}-${tid}`);
   try {
     // 检查在线
     const stat = await qzoneStat(account);
     if (stat.code !== 0) {
-      account = await qqCookies(account.aid);
+      account = await qqCookies(account);
     }
     // 账号基本信息
     const uid = account.uid;
@@ -250,11 +255,12 @@ export async function qzoneDelete(account: any, tid: string): Promise<any> {
  * @returns 发布结果
  */
 export async function qzonePlus(account: any, content: { text: string, images: string[] }) {
+  console.log('[Adapter][qzone][qzonePlus]', `封装-${account.aid}`);
   try {
     // 检查在线
     const stat = await qzoneStat(account);
     if (stat.code !== 0) {
-      account = await qqCookies(account.aid);
+      account = await qqCookies(account);
     }
     const pics = [];
     if (content.images && content.images.length > 0) {
@@ -276,9 +282,10 @@ export async function qzonePlus(account: any, content: { text: string, images: s
  * @returns 更新后的cookies对象
  */
 export async function qqCookies(account: any): Promise<any> {
+  console.log('[Adapter][qzone][qqCookies]', `更新QQcookies-${account.aid}`);
 	try {
     if (!account.auth) { return account } // 不支持则不更新
-		const resp = await axios.get(`${account.auth.url}?access_token=${account.auth.token}&domain=user.qzone.qq.com`, { headers: { 'User-Agent': UA } });
+		const resp = await axios.get(`${account.auth.url}/get_cookies?access_token=${account.auth.token}&domain=user.qzone.qq.com`, { headers: { 'User-Agent': UA } });
 		const cookiesStr = resp.data.data.cookies;
 		let qqcookies: any = {};
 		cookiesStr.split('; ').forEach((c: string) => {
@@ -286,7 +293,8 @@ export async function qqCookies(account: any): Promise<any> {
 			if (qqcookies[key] === undefined) qqcookies[key] = value;
 		});
 		qqcookies.g_tk = generateGtk(qqcookies.p_skey);
-		await Account.findOneAndUpdate({ aid: account.aid }, { $set: { cookies: qqcookies } });
+		const test = await Account.findOneAndUpdate({ aid: account.aid }, { $set: { cookies: qqcookies } });
+    console.log(test);
     account.cookies = qqcookies;
 		return account;
 	} catch (err: any) {
