@@ -34,7 +34,10 @@ export async function render(
       width: 1920,
       height: 1080
     });
-    await page.setContent(html, { waitUntil: 'networkidle0' });
+    await page.setContent(html, {
+      timeout: 1000000,
+      waitUntil: 'networkidle0'
+    });
     const options: ScreenshotOptions = {
       type: 'png',
       omitBackground: false,

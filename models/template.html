@@ -4,110 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>朔望月</title>
-  <style>
-    @page {
-      margin: 0!important;
-      margin-top: 0cm!important;
-      margin-bottom: 0cm!important;
-      margin-left: 0cm!important;
-      margin-right: 0cm!important;
-      size: 4in 8in
-    }
-    body {
-      font-family: "AlibabaPuHuiTi-3-65-Medium", "Noto Sans CJK SC", "PingFang SC", "SimHei", "Arial", sans-serif;
-      background-color: #f2f2f2;
-      margin: 0;
-      padding: 5px
-    }
-    .container {
-      width: 4in;
-      min-height: 4in;
-      margin: 0 auto;
-      padding: 20px;
-      border-radius: 10px;
-      background-color: #f2f2f2;
-      box-sizing: border-box;
-      transform: scale(2);
-      transform-origin: top
-    }
-    .header {
-      display: flex;
-      align-items: center
-    }
-    .header img {
-      border-radius: 50%;
-      width: 50px;
-      height: 50px;
-      margin-right: 10px;
-      box-shadow: 0 0 10px rgba(0, 0, 0, 0.3)
-    }
-    .header-text {
-      display: block;
-    }
-    .header h1 {
-      font-size: 24px;
-      margin: 0;
-      max-width: calc(4in - 100px);
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap
-    }
-    .header h2 {
-      font-size: 12px;
-      margin: 0
-    }
-    .content {
-      margin-top: 20px;
-      min-height: calc(4in - 140px)
-    }
-    .content div {
-      display: block;
-      background-color: #ffffff;
-      padding: 7px;
-      display: flex;
-      align-items: center;
-      word-break: break-word;
-      max-width: fit-content;
-      line-height: 1.5
-    }
-    .content > * {
-      display: block;
-      border-radius: 10px;
-      margin-bottom: 10px
-    }
-    .content > div > * {
-      display: inline-block;
-      vertical-align: middle;
-      white-space: pre-wrap
-    }
-    .content img:not(.cqface), .content video {
-      padding: 0px;
-      margin: 5px;
-      border-radius: 10px;
-      max-width: calc(50% - 10px);
-      max-height: 300px;
-      filter: drop-shadow(2px 2px 2px rgba(0, 0, 0, 0.25))
-    }
-    .content > img, .content > video {
-      margin: 10px 0
-    }
-    .content > video {
-      background-color: transparent
-    }
-    .cqface {
-      width: 32px; 
-      height: 32px
-    }
-    #footer {
-      display: flex;
-      justify-content: space-between;
-      width: 100%;
-      font-size: 0.8rem;
-      margin: 1rem;
-      margin-bottom: -1rem;
-      color: #6665
-    }
-  </style>
+  <link rel="stylesheet" href="https://hitfun.top/css/contents.css">
   <link rel="stylesheet" href="https://hitfun.top/css/AlibabaPuHuiTi-3-65-Medium.css">
 </head>
 <body>
@@ -125,34 +22,7 @@
       <span id="frh"><img title="{{foot_right_hint}}" src="https://patchwiki.biligame.com/images/bluearchive/1/16/do9f9y9i8pp096f2a84vzv1kiwaxtf8.svg"></span>
     </div>
   </div>
-  <script>
-    window.onload = function() {
-      const container = document.querySelector('.container');
-      const contentHeight = container.scrollHeight;
-      const pageHeight4in = 364; // 4 inches in pixels (96px per inch)
-
-      let pageSize = '';
-
-      if (contentHeight <= pageHeight4in) {
-        pageSize = '4in 4in'; // Use 4in x 4in if content fits
-      } else if (contentHeight >= 2304){
-        pageSize = '4in 24in'
-      } else {
-        const containerHeightInInches = (contentHeight / 96 + 0.1);
-        pageSize = `4in ${containerHeightInInches}in`; // Set height to container's height
-      }
-
-      // Dynamically apply the @page size
-      const style = document.createElement('style');
-      style.innerHTML = `
-        @page {
-          size: ${pageSize};
-          margin: 0 !important;
-        }
-      `;
-      document.head.appendChild(style);
-    };
-  </script>
+  <script src="https://fastly.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
   <script src="https://hitfun.top/js/contents.js"></script>
 </body>
 </html>
