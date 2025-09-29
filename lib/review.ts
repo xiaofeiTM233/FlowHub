@@ -99,6 +99,13 @@ export async function GenerateMSG(print: any, image: any): Promise<any> {
       source: "!待审核投稿"
     };
     for (const content of print.content.list) {
+      if (content.type === "json" || content.type === "file" || (content.type !== "text" && content.type !== "image" && content.type !== "face")) {
+        content.type = "text";
+        delete content.data;
+        content.data = {
+          text: `不支持的文件类型`
+        }
+      }
       messages.data.push({
         type: "node",
         data: {

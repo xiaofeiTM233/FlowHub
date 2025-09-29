@@ -60,7 +60,9 @@ export async function POST(request: Request) {
       post = await Post.findOne({timestamp: body.data.timestamp});
     }
     if (!post) {
-      return Response.json({ code: -1, message: `未找到ID为 ${pid} 的帖子` }, { status: 404 });
+      return Response.json({ code: -1, message: `未找到ID为 ${pid || body.data.timestamp} 的帖子` }, { status: 404 });
+    } else {
+      pid = post._id;
     }
     if (post.type !== 'pending' && action !== 'retrial') {
       return Response.json({ code: -1, message: `ID为 ${pid} 的帖子不在审核状态` }, { status: 400 });

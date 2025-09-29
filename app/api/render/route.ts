@@ -54,6 +54,8 @@ export async function POST(request: Request) {
       print.type = 'post';
       post = new Post({ print });
       post.type = 'pending';
+      post.timestamp = print.timestamp;
+      post.sender = print.sender;
       post.cid = print._id;
       //console.log(post)
       post.content.images.push(image);

@@ -29,14 +29,15 @@ export async function POST(request: Request) {
     });
     await post.save();
   }
-
-  // 2. 遍历平台发布
-  const results = await publish(post);
+  let results = post.results || {};
   
   // 如果是已发布状态，直接返回结果
   if (post.type === 'published') {
     return Response.json({ code: 1, message: "published", data: results }, { status: 200 });
   }
+
+  // 2. 遍历平台发布
+  results = await publish(post);
 
   // 3. 更新数据库中帖子
   post.type = 'published';
