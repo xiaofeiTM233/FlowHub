@@ -47,6 +47,21 @@ export async function render(
       options.encoding = 'base64';
     }
 
+    // 万一有人喜欢分片截图呢，先做个功能，不使用，仅支持base64模式，且还需有分片js支持
+    if (process.env.SPLIT_SCREENSHOT === '1') {
+      options.encoding = 'base64';
+      // 可以通过 page.$$() 获取所有匹配选择器的元素，类似 document.querySelectorAll() 这会返回一个包含所有元素句柄的数组
+      const elements = await page.$$('.container');
+      let results = [];
+
+      // 遍历元素，分别截图
+      for (const element of elements) {
+        const result = await element.screenshot(options);
+        results.push(result);
+      }
+      return results;
+    }
+
     // 截图并返回结果
     const body = await page.$('#container');
     if (!body) {
