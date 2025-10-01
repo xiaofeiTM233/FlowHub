@@ -1,4 +1,5 @@
 // app/api/render/route.ts
+import path from 'path';
 import { readFile } from 'fs/promises';
 import dbConnect from '@/lib/db';
 import Print from '@/models/print';
@@ -36,7 +37,10 @@ export async function POST(request: Request) {
     }
     console.log('[Render] 接收到渲染请求:', outputType);
     // 3. 读取 HTML 模板
-    const template = await readFile('./models/template.html', 'utf-8');
+    const template = await readFile(
+      path.join(process.cwd(), 'models', 'template.html'), 
+      'utf-8'
+    );
     // 4. 调用渲染函数
     const image = await render(template, body.content, outputType);
     if (outputType === 'buffer') {
