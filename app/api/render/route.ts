@@ -1,11 +1,12 @@
 // app/api/render/route.ts
 import path from 'path';
+import axios from 'axios';
 import { readFile } from 'fs/promises';
 import dbConnect from '@/lib/db';
 import Print from '@/models/print';
 import Post from '@/models/posts';
 import Account from '@/models/account';
-import { pushReview, GenerateMSG } from '@/lib/review';
+import { pushReview } from '@/lib/review';
 import { render } from '@/lib/renderer';
 
 /**
@@ -42,7 +43,22 @@ export async function POST(request: Request) {
       'utf-8'
     );
     // 4. 调用渲染函数
-    const image = await render(template, body.content, outputType);
+    let image;
+    if (process.env.RENDER_TYPE === '1' && process.env.REMOTE_CHROME_URL) {
+      image = await render(template, body.content, outputType);
+    } else if (process.env.RENDER_TYPE === '2' && process.env.RENDER_URL) {
+      image = await axios.post(process.env.RENDER_URL, {
+        template,
+        data: body.content,
+        outputType
+      }, {
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+    } else {
+      return Response.json({ code: -1, message: '服务器内部错误', error: '未设置渲染服务器' }, { status: 500 });
+    }
     if (outputType === 'buffer') {
       return new Response(image, {
         status: 200,
