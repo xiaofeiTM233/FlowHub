@@ -2,7 +2,7 @@
 import puppeteer, { Browser, ScreenshotOptions } from 'puppeteer-core';
 import mustache from 'mustache';
 
-type OutputType = 'base64' | 'buffer';
+type OutputType = 'base64' | 'buffer' | 'base64Array' | 'html';
 
 /**
  * render | 使用 Puppeteer 连接到远程 Chrome 实例，渲染 HTML 模板并截图。
@@ -48,7 +48,7 @@ export async function render(
     }
 
     // 万一有人喜欢分片截图呢，先做个功能，不使用，仅支持base64模式，且还需有分片js支持
-    if (process.env.SPLIT_SCREENSHOT === '1') {
+    if (outputType === 'base64Array') {
       options.encoding = 'base64';
       // 可以通过 page.$$() 获取所有匹配选择器的元素，类似 document.querySelectorAll() 这会返回一个包含所有元素句柄的数组
       const elements = await page.$$('.container');
@@ -67,7 +67,12 @@ export async function render(
     if (!body) {
       throw new Error('未找到 #container 元素');
     }
-    const result = await body.screenshot(options);
+    let result;
+    if (outputType === 'html') {
+      result = await body.evaluate(el => (el as any).outerHTML);
+    } else {
+      result = await body.screenshot(options);
+    }
     page.close().catch((err) => console.error(err))
     if (typeof result === 'string') {
       return result;

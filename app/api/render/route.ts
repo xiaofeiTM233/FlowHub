@@ -19,7 +19,7 @@ export async function POST(request: Request) {
     // 1. 连接数据库并解析请求体
     await dbConnect();
     const body = await request.json();
-    let outputType = 'base64' as 'base64' | 'buffer';
+    let outputType = 'base64' as 'base64' | 'buffer' | `base64Array` | 'html';
     let print;
     // 1. 根据 _id 查找或创建记录
     if (body._id) {
@@ -35,6 +35,9 @@ export async function POST(request: Request) {
     }
     if (body.type === 'render') {
       outputType = 'buffer';
+    }
+    if (body.type === 'renderhtml') {
+      outputType = 'html';
     }
     console.log('[Render] 接收到渲染请求:', outputType);
     // 3. 读取 HTML 模板
@@ -64,6 +67,14 @@ export async function POST(request: Request) {
         status: 200,
         headers: {
           'Content-Type': 'image/png',
+        },
+      });
+    }
+    if (outputType === 'html') {
+      return new Response(image, {
+        status: 200,
+        headers: {
+          'Content-Type': 'text/html',
         },
       });
     }
