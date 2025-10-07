@@ -3,9 +3,9 @@ import path from 'path';
 import axios from 'axios';
 import { readFile } from 'fs/promises';
 import dbConnect from '@/lib/db';
-import Print from '@/models/print';
-import Post from '@/models/posts';
-import Account from '@/models/account';
+import Draft from '@/models/drafts';
+import Account from '@/models/accounts';
+import Option from '@/models/options';
 import { pushReview } from '@/lib/review';
 import { render } from '@/lib/renderer';
 
@@ -19,19 +19,26 @@ export async function POST(request: Request) {
     // 1. 连接数据库并解析请求体
     await dbConnect();
     const body = await request.json();
+    // 2. 获取配置选项
+    let option = await Option.findById('000000000000000000000000');
+    if (!option) {
+      // 如果不存在默认配置，创建一个
+      option = new Option({ _id: '000000000000000000000000' });
+      await option.save();
+    }
     let outputType = 'base64' as 'base64' | 'buffer' | `base64Array` | 'html';
-    let print;
+    let draft;
     // 1. 根据 _id 查找或创建记录
     if (body._id) {
-      print = await Print.findById(body._id);
-      if (!print) {
+      draft = await Draft.findById(body._id);
+      if (!draft) {
         return Response.json({ code: -1, message: `未找到该记录` }, { status: 404 });
       }
     } else {
-      print = new Print( body );
+      draft = new Draft( body );
     }
-    if (!print.timestamp || print.timestamp <= 0) {
-      print.timestamp = Date.now();
+    if (!draft.timestamp || draft.timestamp <= 0) {
+      draft.timestamp = Date.now();
     }
     if (body.type === 'render') {
       outputType = 'buffer';
@@ -46,21 +53,30 @@ export async function POST(request: Request) {
       'utf-8'
     );
     // 4. 调用渲染函数
-    let image;
+    let image: any;
     if (process.env.RENDER_TYPE === '1' && process.env.REMOTE_CHROME_URL) {
+      // 调用本地渲染函数
       image = await render(template, body.content, outputType);
     } else if (process.env.RENDER_TYPE === '2' && process.env.RENDER_URL) {
-      image = await axios.post(process.env.RENDER_URL, {
+      // 调用远程渲染函数
+      let newType: 'base64' | 'base64Array' | 'html';
+      if (outputType === 'buffer') {
+        newType = 'base64';
+      } else {
+        newType = outputType;
+      }
+      const cfrender = await axios.post(process.env.RENDER_URL, {
         template,
         data: body.content,
-        outputType
-      }, {
-        headers: {
-          'Content-Type': 'application/json'
-        }
+        newType
       });
+      if (outputType === 'buffer') {
+        image = Buffer.from(cfrender.data.base64, 'base64');
+      } else {
+        image = cfrender.data[outputType];
+      }
     } else {
-      return Response.json({ code: -1, message: '服务器内部错误', error: '未设置渲染服务器' }, { status: 500 });
+      return Response.json({ code: -1, message: '服务器内部错误', error: '未设置渲染函数' }, { status: 500 });
     }
     if (outputType === 'buffer') {
       return new Response(image, {
@@ -78,42 +94,29 @@ export async function POST(request: Request) {
         },
       });
     }
-    // 5. 如果是投稿，创建 Post 文档并推送审核
-    let post;
+    // 5. 如果是投稿，推送审核
     if (body.type === 'post') {
-      console.log('[Render] 创建投稿并推送审核');
-      print.type = 'post';
-      post = new Post({ print });
-      post.type = 'pending';
-      post.timestamp = print.timestamp;
-      post.sender = print.sender;
-      post.cid = print._id;
-      //console.log(post)
-      post.content.images.push(image);
-      await post.save();
-      print.pid = post._id;
-      await print.save();
+      console.log('[Render] 推送审核');
       // 推送审核
-      const aid = process.env.REVIEW_PUSH_PLATFORM;
+      const aid = option.review_push_platform;
       const account = await Account.findOne({ aid });
-      const result = await pushReview(account, print, image);
+      const result = await pushReview(account, draft, image);
       return Response.json({
         code: 0,
         message: '渲染完成并已推送待审',
         data: {
-          cid: print._id,
-          pid: post._id,
+          cid: draft._id,
           //base64: image,
           result
         }
       });
     }
-    await print.save();
+    await draft.save();
     return Response.json({
       code: 0,
       message: '渲染完成',
       data: {
-        rid: print._id,
+        cid: draft._id,
         base64: image
       }
     });

@@ -29,18 +29,19 @@ export async function pushNotice(account: any, messages: any): Promise<any> {
 
 /**
  * 生成推送消息结构
- * @param {Object} print - 投稿数据对象
+ * @param {Object} draft - 投稿数据对象
  * @param {string} image - 投稿图片的base64编码字符串
  * @returns {Promise<Object>} 返回消息对象
  */
-export async function GenerateMSG(print: any, image: any): Promise<any> {
+export async function GenerateMSG(draft: any, image: any): Promise<any> {
   let messages = {} as any;
-  const PTID = print.timestamp;
-  const nick = print.sender.nick;
-  const nickname = print.sender.nickname;
-  const user_id = print.sender.userid;
+  const PTID = draft.timestamp;
+  const nick = draft.sender.nick;
+  const nickname = draft.sender.nickname;
+  const user_id = draft.sender.userid;
   const from = `\n来自 ${nick ? '匿名用户 ' : `${nickname}（${user_id}）`}的投稿\n`;
   if (process.env.REVIEW_PUTH_TYPE === '2') {
+    // 推送合并转发，测试性功能，不稳定，不建议使用
     messages = {
       data: [
         {
@@ -98,7 +99,7 @@ export async function GenerateMSG(print: any, image: any): Promise<any> {
       summary: "Powered by FlowHub",
       source: "!待审核投稿"
     };
-    for (const content of print.content.list) {
+    for (const content of draft.content.list) {
       if (content.type === "json" || content.type === "file" || (content.type !== "text" && content.type !== "image" && content.type !== "face")) {
         content.type = "text";
         delete content.data;
@@ -116,6 +117,7 @@ export async function GenerateMSG(print: any, image: any): Promise<any> {
       })
     }
   } else {
+    // 推送图文消息，默认使用
     messages = {
       data: [
         {
@@ -139,12 +141,12 @@ export async function GenerateMSG(print: any, image: any): Promise<any> {
 /**
  * 推送审核通知
  * @param {any} account - 账号对象
- * @param {any} print - 投稿数据对象
+ * @param {any} draft - 投稿数据对象
  * @param {any} image - 投稿图片的base64编码字符串
  * @returns {Promise<any>} 推送操作的结果
  */
-export async function pushReview(account: any, print: any, image: any): Promise<any> {
-  const messages = await GenerateMSG(print, image);
+export async function pushReview(account: any, draft: any, image: any): Promise<any> {
+  const messages = await GenerateMSG(draft, image);
   const result = await pushNotice(account, messages);
   return result;
 }

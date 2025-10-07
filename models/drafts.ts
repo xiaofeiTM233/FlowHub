@@ -1,7 +1,7 @@
-// models/print.ts
+// models/drafts.ts
 import mongoose from 'mongoose';
 
-const printSchema = new mongoose.Schema({
+const draftSchema = new mongoose.Schema({
   type: { type: String, default: 'render' },
   timestamp: { type: Number, default: Date.now },
   pid: { type: String },
@@ -18,11 +18,22 @@ const printSchema = new mongoose.Schema({
     foot_right_hint: { type: String, default: 'by 飞小RAN' },
     list: { type: Array, required: true }
   },
+  review: {
+    approve: { type: [Object], default: [] },
+    reject: { type: [Object], default: [] },
+    comments: { type: [Object], default: [] },
+    stat : {
+      approve: { type: Number, default: 0 },
+      reject: { type: Number, default: 0 },
+    }
+  },
+  num: { type: Number, default: 0 },
+  images: { type: [String], default: [] }
 }, {
   timestamps: true,
   versionKey: false
 });
 
-const Print = mongoose.models.Print || mongoose.model('Print', printSchema);
+const Draft = mongoose.models.Draft || mongoose.model('Draft', draftSchema);
 
-export default Print;
+export default Draft;

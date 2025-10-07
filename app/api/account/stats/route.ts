@@ -1,6 +1,6 @@
 // app/api/account/stats/route.ts
 import dbConnect from '@/lib/db';
-import Account from '@/models/account';
+import Account from '@/models/accounts';
 import { biliStat } from '@/lib/adapter/bili';
 import { qzoneStat } from '@/lib/adapter/qzone';
 

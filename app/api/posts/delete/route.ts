@@ -2,7 +2,7 @@
 import { biliDelete } from '@/lib/adapter/bili';
 import { qzoneDelete } from '@/lib/adapter/qzone';
 import dbConnect from '@/lib/db';
-import Account from '@/models/account';
+import Account from '@/models/accounts';
 import Post from '@/models/posts';
 
 /**

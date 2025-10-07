@@ -1,5 +1,5 @@
 // lib/publish.ts
-import Account from '@/models/account';
+import Account from '@/models/accounts';
 import { biliPlus } from '@/lib/adapter/bili';
 import { qzonePlus } from '@/lib/adapter/qzone';
 

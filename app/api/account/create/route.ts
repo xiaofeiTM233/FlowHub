@@ -1,6 +1,6 @@
 // app/api/account/create/route.ts
 import dbConnect from '@/lib/db';
-import Account from '@/models/account';
+import Account from '@/models/accounts';
 
 /**
  * 创建或更新平台账号
