@@ -91,40 +91,44 @@ export async function DRAFT(request: Request) {
     }
     // 根据 action 执行不同的函数逻辑
     switch (action) {
-      case 'retrial':
+      case 'retrial': // 重审
         draft.type = 'pending';
         draft.review.comments.push({mid, reason: `重审：${reason}`});
         result = `对帖子 ${cid} 执行：重审`;
         break;
-      case 'approve':
+      case 'approve': // 通过
         draft.review.approve.push({mid, reason});
         result = `对帖子 ${cid} 投票：通过`;
         break;
-      case 'reject':
+      case 'reject': // 拒绝
         draft.review.reject.push({mid, reason});
         result = `对帖子 ${cid} 投票：拒绝`;
         break;
-      case 'approveforce':
+      case 'approveforce': // 强制通过
         draft.type = 'approved';
         draft.review.comments.push({mid, reason: `强制通过：${reason}`});
         result = `对帖子 ${cid} 执行：强制通过`;
         break;
-      case 'rejectforce':
+      case 'rejectforce': // 强制拒绝
         draft.type = 'rejected';
         draft.review.comments.push({mid, reason: `强制拒绝：${reason}`});
         result = `对帖子 ${cid} 执行：强制拒绝`;
         break;
-      case 'block':
+      case 'block': // 拉黑
         draft.type = 'rejected';
         draft.review.comments.push({mid, reason: `拉黑：${reason}`});
         // 还没写拉黑逻辑
         result = `对帖子 ${cid} 执行：拉黑`;
         break;
-      case 'raw':
-        let data;
-        // 还没写预览逻辑
-        return Response.json({ code: 0, message: `获取预览`, data }, { status: 200 });
-      case 'setnum':
+      case 'comment': // 评论
+        draft.review.comments.push({mid, reason});
+        // 还没写评论推送
+        result = `对帖子 ${cid} 评论：${reason}`;
+        break;
+      case 'raw': // 获取原始内容
+        const raw = draft.content;
+        return Response.json({ code: 0, message: `获取原始内容`, data: raw }, { status: 200 });
+      case 'num': // 设置编号
         const num = body.data.num;
         if (typeof num !== 'number' || isNaN(num) || !Number.isInteger(num) || num <= 0) {
           return Response.json({ code: -1, message: `编号必须是一个大于 0 的整数`, data: { error_number: num } }, { status: 400 });
@@ -132,9 +136,23 @@ export async function DRAFT(request: Request) {
         option.last_number = num;
         draft.num = num;
         return Response.json({ code: 0, message: `已设定上次编号和当前稿件编号为${num}${option.publish_direct ? '，请尽快发布该帖子避免编号顺序异常' : ''}`, data: { last_number: num } }, { status: 200 });
-      default:
+      case 'togglenick': // 切换匿名
+        draft.sender.nick = !draft.sender.nick;
+        if (draft.sender.nick) {
+          draft.content.nickname = '匿名用户';
+          draft.content.userid = 10000;
+        } else {
+          draft.content.nickname = draft.sender.nickname;
+          draft.content.userid = draft.sender.nickname;
+        }
+        return Response.json({ code: 0, message: `已切换 ${draft._id} 稿件为${draft.nick ? '匿名' : '非匿名'}，请考虑重新渲染稿件` }, { status: 200 });
+      case 'sender': // 获取发帖人信息
+        const sender = draft.sender;
+        return Response.json({ code: 0, message: `获取原始内容`, data: sender }, { status: 200 });
+      default: // 默认返回错误
         return Response.json({ code: -1, message: `不支持的操作: ${action}` }, { status: 400 });
     }
+    // 审核相关操作，计算票数
     draft.review.stat.approve = draft.review.approve.length || 0;
     draft.review.stat.reject = draft.review.reject.length || 0;
     if ((option.approve_num && option.approve_num > 0 && draft.review.stat.approve >= option.approve_num) ||
@@ -163,7 +181,7 @@ export async function DRAFT(request: Request) {
         draft.num = option.last_number;
       }
       draft.pid = post._id;
-      // 可能后续还要写通过后的推送
+      // 还没写通过后的推送
       if (option.publish_direct) {
         console.log(`[Review] 达成发帖条件，推送发布：${draft._id}`)
         results = await publish(post);
