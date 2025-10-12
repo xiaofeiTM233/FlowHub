@@ -28,9 +28,9 @@ export async function POST(request: Request) {
     }
     let outputType = 'base64' as 'base64' | 'buffer' | `base64Array` | 'html';
     let draft;
-    // 1. 根据 _id 查找或创建记录
-    if (body._id) {
-      draft = await Draft.findById(body._id);
+    // 1. 根据 cid 查找或创建记录
+    if (body.cid) {
+      draft = await Draft.findById(body.cid);
       if (!draft) {
         return Response.json({
           code: -1,
@@ -57,9 +57,11 @@ export async function POST(request: Request) {
     );
     // 4. 调用渲染函数
     let image: any;
+    let data = draft.content;
+    data.time = new Date(draft.timestamp + (8 * 60 * 60 * 1000)).toISOString().slice(0, 19).replace('T', ' ');
     if (process.env.RENDER_TYPE === '1' && process.env.REMOTE_CHROME_URL) {
       // 调用本地渲染函数
-      image = await render(template, body.content, outputType);
+      image = await render(template, data, outputType);
     } else if (process.env.RENDER_TYPE === '2' && process.env.RENDER_URL) {
       // 调用远程渲染函数
       let newType: 'base64' | 'base64Array' | 'html';
@@ -70,7 +72,7 @@ export async function POST(request: Request) {
       }
       const cfrender = await axios.post(process.env.RENDER_URL, {
         template,
-        data: body.content,
+        data,
         newType
       });
       if (outputType === 'buffer') {
@@ -86,6 +88,7 @@ export async function POST(request: Request) {
       }, { status: 500 });
     }
     if (outputType === 'buffer') {
+      await draft.save();
       return new Response(image, {
         status: 200,
         headers: {
@@ -94,6 +97,7 @@ export async function POST(request: Request) {
       });
     }
     if (outputType === 'html') {
+      await draft.save();
       return new Response(image, {
         status: 200,
         headers: {
@@ -101,14 +105,16 @@ export async function POST(request: Request) {
         },
       });
     }
-    await draft.save();
     // 5. 如果是投稿，推送审核
     if (body.type === 'post') {
+      draft.images.push(image)
+      draft.type = 'pending';
+      await draft.save();
       console.log('[Render] 推送审核');
       // 推送审核
       const aid = option.review_push_platform;
       const account = await Account.findOne({ aid });
-      const result = await pushReview(account, draft, image);
+      const result = await pushReview(account, draft, image, option);
       return Response.json({
         code: 0,
         message: '渲染完成并已推送待审',
@@ -119,6 +125,7 @@ export async function POST(request: Request) {
         }
       });
     }
+    await draft.save();
     return Response.json({
       code: 0,
       message: '渲染完成',

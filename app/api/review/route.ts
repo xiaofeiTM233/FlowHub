@@ -183,7 +183,7 @@ export async function POST(request: Request) {
           data: sender
         }, { status: 200 });
       case 'tag': // 获取标签
-        if (process.env.REVIEW_AITAG_URL) {
+        if (process.env.REVIEW_TAG_URL) {
           const tags = await getTags(draft.content);
           draft.tags = tags;
           await draft.save();
@@ -201,7 +201,7 @@ export async function POST(request: Request) {
       case 'repush': // 重新推送审核
         const aid = option.review_push_platform;
         const account = await Account.findOne({ aid });
-        const repush = await pushReview(account, draft, draft.images[0]);
+        const repush = await pushReview(account, draft, draft.images[0], option);
         return Response.json({
           code: 0,
           message: `已重新推送投稿 ${draft._id}`,

@@ -16,13 +16,17 @@
     "mustache": "^4.2.0",
     "next": "15.5.2",
     "puppeteer-core": "^24.22.0",
+    "qrcode": "^1.5.4",
     "react": "19.1.0",
-    "react-dom": "19.1.0"
+    "react-dom": "19.1.0",
+    "react-viewer": "^3.2.2",
+    "viewerjs": "^1.11.7"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
+    "@types/qrcode": "^1.5.5",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",

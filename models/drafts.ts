@@ -15,7 +15,7 @@ const draftSchema = new mongoose.Schema({
     userid: { type: Number, default: 10000 },
     nickname: { type: String, default: '昵称' },
     foot_left_hint: { type: String, default: '发表于 ' },
-    foot_right_hint: { type: String, default: 'by 飞小RAN' },
+    foot_right_hint: { type: String, default: 'by FlowHub' },
     list: { type: Array, required: true }
   },
   review: {
