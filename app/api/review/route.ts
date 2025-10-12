@@ -47,7 +47,7 @@ export async function GET(request: Request) {
  * @param request 请求体包含 cid, action 和其他可能的参数
  * @returns 操作结果
  */
-export async function DRAFT(request: Request) {
+export async function POST(request: Request) {
   try {
     const body = await request.json();
     await dbConnect();
