@@ -28,7 +28,13 @@ const draftSchema = new mongoose.Schema({
     }
   },
   num: { type: Number, default: 0 },
-  images: { type: [String], default: [] }
+  images: { type: [String], default: [] },
+  tags: {
+    通用: { type: [String], default: [] },
+    高风险: { type: [String], default: [] },
+    中风险: { type: [String], default: [] },
+    低风险: { type: [String], default: [] }
+  }
 }, {
   timestamps: true,
   versionKey: false

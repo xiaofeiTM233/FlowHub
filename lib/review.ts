@@ -150,3 +150,16 @@ export async function pushReview(account: any, draft: any, image: any): Promise<
   const result = await pushNotice(account, messages);
   return result;
 }
+
+/**
+ * 调用AI标签审核接口对内容进行审核
+ * @param {any} content - 需要审核的内容
+ * @returns {Promise<any>} 返回AI标签审核的结果
+ */
+export async function getTags(content: any): Promise<any> {
+// 调用AI标签审核接口
+  const tres = await axios.post(process.env.REVIEW_TAG_URL as string, {
+    data: content
+  });
+  return tres.data;
+}

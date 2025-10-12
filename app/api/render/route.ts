@@ -94,6 +94,7 @@ export async function POST(request: Request) {
         },
       });
     }
+    await draft.save();
     // 5. 如果是投稿，推送审核
     if (body.type === 'post') {
       console.log('[Render] 推送审核');
@@ -111,7 +112,6 @@ export async function POST(request: Request) {
         }
       });
     }
-    await draft.save();
     return Response.json({
       code: 0,
       message: '渲染完成',
