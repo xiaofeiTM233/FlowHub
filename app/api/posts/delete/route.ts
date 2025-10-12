@@ -17,18 +17,27 @@ export async function POST(request: Request) {
 
   // 1. 检查请求体中是否包含 _id
   if (!_id) {
-    return Response.json({ code: -1, message: "缺少 _id 参数" }, { status: 400 });
+    return Response.json({
+      code: -1,
+      message: "缺少 _id 参数"
+    }, { status: 400 });
   }
 
   // 2. 根据 _id 查找帖子
   const post = await Post.findById(_id);
   if (!post) {
-    return Response.json({ code: -1, message: `未找到该帖子` }, { status: 404 });
+    return Response.json({
+      code: -1,
+      message: `未找到该帖子`
+    }, { status: 404 });
   }
 
   // 如果帖子已经是删除状态，可以提前返回
   if (post.type === 'deleted') {
-    return Response.json({ code: 1, message: "该帖子已被删除" }, { status: 200 });
+    return Response.json({
+      code: 1,
+      message: "该帖子已被删除"
+    }, { status: 200 });
   }
 
   const results = post.results || {};
@@ -64,5 +73,9 @@ export async function POST(request: Request) {
   await post.save();
 
   // 5. 返回处理结果
-  return Response.json({ code: 0, message: "删除成功", data: deleteResults }, { status: 200 });
+  return Response.json({
+    code: 0,
+    message: "删除成功",
+    data: deleteResults
+  }, { status: 200 });
 }

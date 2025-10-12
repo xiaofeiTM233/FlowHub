@@ -21,5 +21,9 @@ export async function POST(request: Request) {
     }
   );
 
-  return Response.json({ code: 0, message: '平台账号已更新', account: theAccount }, { status: 200 });
+  return Response.json({
+    code: 0,
+    message: '平台账号已更新',
+    account: theAccount
+  }, { status: 200 });
 }

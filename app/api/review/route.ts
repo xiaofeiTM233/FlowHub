@@ -19,13 +19,19 @@ export async function GET(request: Request) {
     const cid = searchParams.get('cid');
     // 1. 验证参数
     if (!cid) {
-      return Response.json({ code: -1, message: "缺少参数" }, { status: 400 });
+      return Response.json({
+        code: -1,
+        message: "缺少参数"
+      }, { status: 400 });
     }
     await dbConnect();
     // 2. 根据 cid (即 _id) 查找帖子
     const draft = await Draft.findById(cid);
     if (!draft) {
-      return Response.json({ code: -1, message: `未找到ID为 ${cid} 的帖子` }, { status: 404 });
+      return Response.json({
+        code: -1,
+        message: `未找到ID为 ${cid} 的帖子`
+      }, { status: 404 });
     }
     // 3. 返回帖子的 review 内容
     return Response.json({
@@ -66,18 +72,24 @@ export async function POST(request: Request) {
 
     let result = '';
     let draft;
-    if (cid) {
-      draft = await Draft.findById(cid); 
-    } else if (body.data.timestamp) {
-      draft = await Draft.findOne({timestamp: body.data.timestamp});
-    }
-    if (!draft) {
-      return Response.json({ code: -1, message: `未找到ID为 ${cid || body.data.timestamp} 的帖子` }, { status: 404 });
-    } else {
+    try {
+      if (cid) {
+        draft = await Draft.findById(cid); 
+      } else if (body.data.timestamp) {
+        draft = await Draft.findOne({timestamp: body.data.timestamp});
+      }
       cid = draft._id;
+    } catch(e) {
+      return Response.json({
+        code: -1,
+        message: `未找到ID为 ${cid || body.data.timestamp} 的帖子`
+      }, { status: 404 });
     }
     if (draft.type !== 'pending' && action !== 'retrial') {
-      return Response.json({ code: -1, message: `ID为 ${cid} 的帖子不在审核状态` }, { status: 400 });
+      return Response.json({
+        code: -1,
+        message: `ID为 ${cid} 的帖子不在审核状态`
+      }, { status: 400 });
     }
     console.log(`[Review] 版主 ${mid} 对帖子 ${cid} 执行操作: ${action}，理由: ${reason}`);
     // 判断是否重审，如果是重审，则清空之前的投票记录
@@ -127,16 +139,28 @@ export async function POST(request: Request) {
         break;
       case 'raw': // 获取原始内容
         const raw = draft.content;
-        return Response.json({ code: 0, message: `获取原始内容`, data: raw }, { status: 200 });
+        return Response.json({
+          code: 0,
+          message: `获取原始内容`,
+          data: raw
+        }, { status: 200 });
       case 'num': // 设置编号
         const num = body.data.num;
         if (typeof num !== 'number' || isNaN(num) || !Number.isInteger(num) || num <= 0) {
-          return Response.json({ code: -1, message: `编号必须是一个大于 0 的整数`, data: { error_number: num } }, { status: 400 });
+          return Response.json({
+            code: -1,
+            message: `编号必须是一个大于 0 的整数`,
+            data: { error_number: num }
+          }, { status: 400 });
         }
         option.last_number = num;
         draft.num = num;
         await draft.save();
-        return Response.json({ code: 0, message: `已设定上次编号和当前稿件编号为${num}${option.publish_direct ? '，请尽快发布该帖子避免编号顺序异常' : ''}`, data: { last_number: num } }, { status: 200 });
+        return Response.json({
+          code: 0,
+          message: `已设定上次编号和当前稿件编号为${num}${option.publish_direct ? '，请尽快发布该帖子避免编号顺序异常' : ''}`,
+          data: { last_number: num }
+        }, { status: 200 });
       case 'togglenick': // 切换匿名
         draft.sender.nick = !draft.sender.nick;
         if (draft.sender.nick) {
@@ -147,26 +171,47 @@ export async function POST(request: Request) {
           draft.content.userid = draft.sender.userid;
         }
         await draft.save();
-        return Response.json({ code: 0, message: `已切换 ${draft._id} 稿件为${draft.nick ? '匿名' : '非匿名'}，请考虑重新渲染稿件` }, { status: 200 });
+        return Response.json({
+          code: 0,
+          message: `已切换 ${draft._id} 稿件为${draft.nick ? '匿名' : '非匿名'}，请考虑重新渲染稿件`
+        }, { status: 200 });
       case 'sender': // 获取发帖人信息
         const sender = draft.sender;
-        return Response.json({ code: 0, message: `获取原始内容`, data: sender }, { status: 200 });
+        return Response.json({
+          code: 0,
+          message: `获取原始内容`,
+          data: sender
+        }, { status: 200 });
       case 'tag': // 获取标签
         if (process.env.REVIEW_AITAG_URL) {
           const tags = await getTags(draft.content);
           draft.tags = tags;
           await draft.save();
-          return Response.json({ code: 0, message: `获取标签`, data: tags }, { status: 200 });
+          return Response.json({
+            code: 0,
+            message: `获取标签`,
+            data: tags
+          }, { status: 200 });
         } else {
-          return Response.json({ code: -1, message: `未配置 AI 标签服务` }, { status: 400 });
+          return Response.json({
+            code: -1,
+            message: `未配置 AI 标签服务`
+          }, { status: 400 });
         }
       case 'repush': // 重新推送审核
         const aid = option.review_push_platform;
         const account = await Account.findOne({ aid });
         const repush = await pushReview(account, draft, draft.images[0]);
-        return Response.json({ code: 0, message: `已重新推送投稿 ${draft._id}`, data: repush }, { status: 200 });
+        return Response.json({
+          code: 0,
+          message: `已重新推送投稿 ${draft._id}`,
+          data: repush
+        }, { status: 200 });
       default: // 默认返回错误
-        return Response.json({ code: -1, message: `不支持的操作: ${action}` }, { status: 400 });
+        return Response.json({
+          code: -1,
+          message: `不支持的操作: ${action}`
+        }, { status: 400 });
     }
     // 审核相关操作，计算票数
     draft.review.stat.approve = draft.review.approve.length || 0;

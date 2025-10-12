@@ -27,5 +27,9 @@ export async function GET(request: Request) {
     await account.save();
     stats[account.aid] = stat;
   }
-  return Response.json({ code: 0, message: '已获取并更新账号统计信息', data: stats }, { status: 200 });
+  return Response.json({
+    code: 0,
+    message: '已获取并更新账号统计信息',
+    data: stats
+  }, { status: 200 });
 }

@@ -32,7 +32,10 @@ export async function POST(request: Request) {
     if (body._id) {
       draft = await Draft.findById(body._id);
       if (!draft) {
-        return Response.json({ code: -1, message: `未找到该记录` }, { status: 404 });
+        return Response.json({
+          code: -1,
+          message: `未找到该记录`
+        }, { status: 404 });
       }
     } else {
       draft = new Draft( body );
@@ -76,7 +79,11 @@ export async function POST(request: Request) {
         image = cfrender.data[outputType];
       }
     } else {
-      return Response.json({ code: -1, message: '服务器内部错误', error: '未设置渲染函数' }, { status: 500 });
+      return Response.json({
+        code: -1,
+        message: '服务器内部错误',
+        error: '未设置渲染函数'
+      }, { status: 500 });
     }
     if (outputType === 'buffer') {
       return new Response(image, {

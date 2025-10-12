@@ -13,5 +13,8 @@ export async function POST(request: Request) {
   const { name, email } = await request.json();
   const theuser = new user({ name, email });
   await theuser.save();
-  return Response.json({ message: '用户已创建', user: theuser }, { status: 201 });
+  return Response.json({
+    message: '用户已创建',
+    user: theuser
+  }, { status: 201 });
 }
