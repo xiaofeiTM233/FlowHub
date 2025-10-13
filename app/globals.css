@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import 'viewerjs/dist/viewer.css'; 
 
 :root {
   --background: #ffffff;
