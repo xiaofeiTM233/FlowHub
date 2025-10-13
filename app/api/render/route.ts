@@ -107,6 +107,7 @@ export async function POST(request: Request) {
     }
     // 5. 如果是投稿，推送审核
     if (body.type === 'post') {
+      draft.images = [];
       draft.images.push(image)
       draft.type = 'pending';
       await draft.save();

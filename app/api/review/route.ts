@@ -185,12 +185,12 @@ export async function POST(request: Request) {
       case 'tag': // 获取标签
         if (process.env.REVIEW_TAG_URL) {
           const tags = await getTags(draft.content);
-          draft.tags = tags;
+          draft.tags = tags.data;
           await draft.save();
           return Response.json({
             code: 0,
             message: `获取标签`,
-            data: tags
+            data: tags.data
           }, { status: 200 });
         } else {
           return Response.json({
