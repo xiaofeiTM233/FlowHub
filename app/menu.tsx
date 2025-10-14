@@ -13,7 +13,7 @@ export const menuData = [
     icon: <SmileOutlined />,
   },
   {
-    path: '/',
+    path: '/review',
     name: '审核管理',
     icon: <TableOutlined />,
     routes: [
@@ -22,18 +22,6 @@ export const menuData = [
         name: '帖子审核',
         icon: <FileTextOutlined />,
       }
-    ],
-  },
-  {
-    path: '/admin',
-    name: '管理页',
-    icon: <CrownOutlined />,
-    routes: [
-      {
-        path: '/admin/sub-page',
-        name: '二级管理页',
-        icon: <SmileOutlined />,
-      },
     ],
   },
 ];

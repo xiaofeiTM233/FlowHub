@@ -1,3 +1,4 @@
+// components/GlobalLayout.tsx
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -15,7 +16,7 @@ const GlobalLayout = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     setIsMounted(true);
   }, []);
-
+  
   if (!isMounted) {
     return null; 
   }
