@@ -61,11 +61,18 @@ export async function GET(request: NextRequest) {
 
     // 执行数据库查询
     const total = await Draft.countDocuments(filter);
-    const records = await Draft.find(filter)
+    let records = await Draft.find(filter)
       .sort({ createdAt: -1 })
       .skip((current - 1) * pageSize)
       .limit(pageSize)
       .lean();
+    for (const i of records) {
+      i.nick = i.sender.nick;
+      delete i.sender;
+      i.stat = i.review.stat;
+      delete i.review;
+      delete i.content.list;
+    }
     return NextResponse.json({
       data: records,
       total,

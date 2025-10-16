@@ -24,6 +24,7 @@
     "qrcode": "^1.5.4",
     "react": "19.1.0",
     "react-dom": "19.1.0",
+    "react-syntax-highlighter": "^15.6.6",
     "react-viewer": "^3.2.2",
     "viewerjs": "^1.11.7"
   },
@@ -34,6 +35,7 @@
     "@types/qrcode": "^1.5.5",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/react-syntax-highlighter": "^15.5.13",
     "eslint": "^9",
     "eslint-config-next": "15.5.2",
     "tailwindcss": "^4",

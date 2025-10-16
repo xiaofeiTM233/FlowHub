@@ -110,6 +110,9 @@ export async function POST(request: Request) {
       draft.images = [];
       draft.images.push(image)
       draft.type = 'pending';
+      if (draft.sender.platform.length === 0) {
+        draft.sender.platform = option.default_platform;
+      }
       await draft.save();
       console.log('[Render] 推送审核');
       // 推送审核

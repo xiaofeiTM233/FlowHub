@@ -118,7 +118,7 @@ const ReviewListPage: React.FC = () => {
     },
     {
       title: '审核数据',
-      dataIndex: 'reviewData',
+      dataIndex: 'stat',
       search: false,
       align: 'center',
       render: (_, record) => (
@@ -130,7 +130,7 @@ const ReviewListPage: React.FC = () => {
               fontSize: '15px',
             }}
           >
-            {record.review.stat.approve}
+            {record.stat.approve}
           </span>
           <span>:</span>
           <span
@@ -140,7 +140,7 @@ const ReviewListPage: React.FC = () => {
               fontSize: '15px',
             }}
           >
-            {record.review.stat.reject}
+            {record.stat.reject}
           </span>
         </Space>
       ),
@@ -168,7 +168,7 @@ const ReviewListPage: React.FC = () => {
     },
     {
       title: '匿名状态',
-      dataIndex: ['sender', 'nick'],
+      dataIndex: 'nick',
       valueType: 'select',
       valueEnum: { 
         true: { text: '匿名' }, 

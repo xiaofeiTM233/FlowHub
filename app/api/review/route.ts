@@ -231,7 +231,7 @@ export async function POST(request: Request) {
       console.log(`[Review] 达成发帖条件，创建 ${draft._id} 为投稿`)
       let post = new Post({ draft });
       post.type = 'pending';
-      post.sender = draft.sender;
+      post.sender.platform = draft.sender.platform;
       post.cid = draft._id;
       for (const i of draft.images) {
         // 将审核图片添加到投稿图片中
