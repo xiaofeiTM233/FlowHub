@@ -10,6 +10,58 @@ import { pushReview } from '@/lib/review';
 import { render } from '@/lib/renderer';
 
 /**
+ * 接收投稿数据，渲染成 HTML 返回
+ * @param request 包含投稿内容的请求
+ * @returns 渲染后的 HTML
+ */
+export async function GET(request: Request) {
+  try {
+    // 获取 cid
+    const searchParams = new URLSearchParams(request.url.split('?')[1]);
+    const cid = searchParams.get('cid');
+    // 1. 验证参数
+    if (!cid) {
+      return Response.json({
+        code: -1,
+        message: "缺少参数"
+      }, { status: 400 });
+    }
+    await dbConnect();
+    // 2. 根据 cid (即 _id) 查找帖子
+    let draft = await Draft.findById(cid);
+    if (!draft) {
+      return Response.json({
+        code: -1,
+        message: `未找到ID为 ${cid} 的帖子`
+      }, { status: 404 });
+    }
+    // 3. 读取 HTML 模板
+    const template = await readFile(
+      path.join(process.cwd(), 'models', 'template.html'), 
+      'utf-8'
+    );
+    // 4. 调用渲染函数
+    let html: any;
+    let data = draft.content;
+    data.time = new Date(draft.timestamp + (8 * 60 * 60 * 1000)).toISOString().slice(0, 19).replace('T', ' ');
+    html = await render(template, data, 'html');
+    // 5. 返回 HTML
+    return new Response(html, {
+      status: 200,
+      headers: {
+        'Content-Type': 'text/html',
+      },
+    });
+  } catch (error: any) {
+    console.error('获取帖子信息失败:', error);
+    return Response.json({
+      code: -1,
+      message: error.message || '服务器内部错误'
+    }, { status: 500 });
+  }
+}
+
+/**
  * 接收投稿数据，渲染成图片返回或推送审核
  * @param request 包含投稿内容的请求
  * @returns 渲染后的 PNG 图片
@@ -36,6 +88,9 @@ export async function POST(request: Request) {
           code: -1,
           message: `未找到该记录`
         }, { status: 404 });
+      }
+      if (body.content) {
+        draft.content = body.content;
       }
     } else {
       draft = new Draft( body );
