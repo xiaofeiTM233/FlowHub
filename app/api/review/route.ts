@@ -26,18 +26,23 @@ export async function GET(request: Request) {
     }
     await dbConnect();
     // 2. 根据 cid (即 _id) 查找帖子
-    const draft = await Draft.findById(cid);
+    let draft = await Draft.findById(cid);
     if (!draft) {
       return Response.json({
         code: -1,
         message: `未找到ID为 ${cid} 的帖子`
       }, { status: 404 });
     }
-    // 3. 返回帖子的 review 内容
+    draft.nick = draft.sender.nick;
+    delete draft.sender;
+    draft.stat = draft.review.stat;
+    delete draft.review;
+    delete draft.content.list;
+    // 3. 返回帖子内容
     return Response.json({
       code: 0,
       message: "获取审核信息成功",
-      data: draft.review.stat || {} // 如果 review 字段不存在，返回一个空对象
+      data: draft || {}
     }, { status: 200 });
   } catch (error: any) {
     console.error('获取审核信息失败:', error);
