@@ -7,9 +7,9 @@ import dynamic from 'next/dynamic';
 import { useParams } from 'next/navigation';
 
 // 第三方库
-import { App, Button, Card, Col, Divider, Descriptions, Flex, Image, Popconfirm, Radio, Row, Spin, Result, Input, InputNumber, Space, Tooltip } from 'antd';
+import { App, Button, Col, Descriptions, Flex, Image, Popconfirm, Radio, Row, Spin, Result, Input, InputNumber, Space } from 'antd';
 import { SyncOutlined, UserSwitchOutlined, BlockOutlined, TagsOutlined, SendOutlined, SafetyOutlined } from '@ant-design/icons';
-import { PageContainer } from '@ant-design/pro-components';
+import { PageContainer, ProCard } from '@ant-design/pro-components';
 import axios from 'axios';
 import dayjs from 'dayjs';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
@@ -224,7 +224,7 @@ const PostDetailPage: React.FC = () => {
   const renderMainView = () => {
     switch (activeView) {
       case 'html':
-        // 显示 HTML 渲染结果
+        // HTML 渲染
         return (
           <iframe
             src={`/api/render?cid=${id}`}
@@ -239,7 +239,7 @@ const PostDetailPage: React.FC = () => {
         );
         
       case 'json':
-        // 显示格式化的 JSON 内容
+        // JSON 内容
         return (
           <div style={{ 
             maxHeight: height, 
@@ -257,7 +257,7 @@ const PostDetailPage: React.FC = () => {
         );
         
       case 'edit':
-        // JSON 编辑模式
+        // JSON 编辑
         return (
           <div style={{ 
             maxHeight: height, 
@@ -306,23 +306,21 @@ const PostDetailPage: React.FC = () => {
         title: '',
       }}
     >
-      {/* 顶部信息栏 */}
-      <Row gutter={16}>
-        <Col span={16}>
-          <Card>
-            <Flex justify="space-between" align="center" style={{ height: 32 }}>
+      <Row gutter={[16, 16]}>
+        <Col xs={{ span: 24, order: 1 }} md={{ span: 16, order: 1 }}>
+          <ProCard>
+            <Flex justify="space-between" align="center" style={{ minHeight: 32 }}>
               <strong>帖子ID: {post._id}</strong>
               <span>
                 发布于: {dayjs(post.createdAt).format('YYYY-MM-DD HH:mm:ss')}
               </span>
             </Flex>
-          </Card>
+          </ProCard>
         </Col>
-        
-        {/* 视图切换控制器 */}
-        <Col span={8}>
-          <Card style={{ marginBottom: 16 }}>
-            <Flex justify="space-between" align="center">
+
+        <Col xs={{ span: 24, order: 4 }} md={{ span: 8, order: 2 }}>
+          <ProCard>
+            <Flex justify="space-between" align="center" style={{ height: 32 }}>
               <Radio.Group
                 value={activeView}
                 onChange={(e) => setActiveView(e.target.value)}
@@ -335,183 +333,123 @@ const PostDetailPage: React.FC = () => {
                 <Radio.Button value="edit">Edit</Radio.Button>
               </Radio.Group>
             </Flex>
-          </Card>
-        </Col>
-      </Row>
-
-      {/* 主内容区域 */}
-      <Row gutter={16}>
-        {/* 左侧主内容展示区 */}
-        <Col span={16}>
-          <Card>{renderMainView()}</Card>
+          </ProCard>
         </Col>
 
-        {/* 右侧基本信息区 */}
-        <Col span={8}>
-          <Card title="基本信息">
-            <Descriptions column={1} bordered size="small">
-              <Descriptions.Item label="发布者">
-                {`${post.content.nickname} (ID: ${post.content.userid})`}
-              </Descriptions.Item>
-              <Descriptions.Item label="状态">
-                <ReviewStatus status={post.type} />
-              </Descriptions.Item>
-              <Descriptions.Item label="标签">
-                <Tags tags={post.tags} />
-              </Descriptions.Item>
-              <Descriptions.Item label="审核数据">
-                <Stat 
-                  approve={post.review.stat.approve} 
-                  reject={post.review.stat.reject} 
-                />
-              </Descriptions.Item>
-            </Descriptions>
-          </Card>
-          
-          {/* 审核操作区域 */}
-          <Card title="审核操作" style={{ marginTop: 16 }}>
-            <Flex gap="small" wrap="wrap">
-              <Button
-                type="primary"
-                style={{ 
-                  backgroundColor: '#52c41a'
-                }}
-                onClick={() => handleAction('approve')}
-              >
-                通过
-              </Button>
-              <Button
-                type="primary"
-                danger
-                onClick={() => handleAction('reject')}
-              >
-                拒绝
-              </Button>
-              <Popconfirm
-                title="确认强制通过？"
-                description="此操作将绕过常规审核流程。"
-                onConfirm={() => handleAction('approveforce')}
-                okText="确认"
-                cancelText="取消"
-              >
+        <Col xs={{ span: 24, order: 5 }} md={{ span: 16, order: 3 }}>
+          <ProCard style={{ height: '100%' }}>
+            {renderMainView()}
+          </ProCard>
+        </Col>
+
+        <Col xs={{ span: 24, order: 2 }} md={{ span: 8, order: 4 }}>
+          <Flex vertical gap="middle" style={{ height: '100%' }}>
+            <ProCard title="基本信息" style={{ flex: 1 }}>
+              <Descriptions column={1} bordered size="small">
+                <Descriptions.Item label="用户">
+                  {`${post.content.nickname} (ID: ${post.content.userid})`}
+                </Descriptions.Item>
+                <Descriptions.Item label="状态">
+                  <ReviewStatus status={post.type} />
+                </Descriptions.Item>
+                <Descriptions.Item label="标签">
+                  <Tags tags={post.tags} />
+                </Descriptions.Item>
+                <Descriptions.Item label="票数">
+                  <Stat 
+                    approve={post.review.stat.approve} 
+                    reject={post.review.stat.reject} 
+                  />
+                </Descriptions.Item>
+              </Descriptions>
+            </ProCard>
+            
+            <ProCard title="审核操作">
+              <Flex gap="small" wrap="wrap">
                 <Button
-                  icon={<SafetyOutlined />}
-                  type="dashed"
+                  type="primary"
+                  style={{ backgroundColor: '#52c41a' }}
+                  onClick={() => handleAction('approve')}
                 >
-                  强制通过
+                  通过
                 </Button>
-              </Popconfirm>
-              
-              <Popconfirm
-                title="确认强制拒绝？"
-                description="此操作将绕过常规审核流程。"
-                onConfirm={() => handleAction('rejectforce')}
-                okText="确认"
-                cancelText="取消"
-              >
-                <Button
-                  icon={<SafetyOutlined />}
-                  type="dashed"
-                >
-                  强制拒绝
-                </Button>
-              </Popconfirm>
-              <Popconfirm
-                title="确认拉黑此用户？"
-                description="该用户将无法再发布内容。（其实是还没写解封）"
-                onConfirm={() => handleAction('block')}
-                okText="确认"
-                cancelText="取消"
-              >
                 <Button
                   type="primary"
                   danger
-                  ghost
-                  icon={<BlockOutlined />}
+                  onClick={() => handleAction('reject')}
                 >
-                  拉黑
+                  拒绝
                 </Button>
-              </Popconfirm>
-              <Button 
-                icon={<SyncOutlined />} 
-                onClick={() => handleAction('retrial')}
-              >
-                重审
-              </Button>
-              <Button 
-                icon={<UserSwitchOutlined />} 
-                onClick={() => handleAction('togglenick')}
-              >
-                切换匿名
-              </Button>
-              <Button 
-                icon={<TagsOutlined />}
-                onClick={() => handleAction('tag')} 
-                disabled={tagCooldown > 0}
-              >
-                {tagCooldown > 0 ? `更新标签 (${tagCooldown}s)` : '更新标签'}
-              </Button>
-              <Button 
-                icon={<SendOutlined />}
-                onClick={() => handleAction('repush')} 
-                disabled={repushCooldown > 0}
-              >
-                {repushCooldown > 0 ? `重新推送 (${repushCooldown}s)` : '重新推送'}
-              </Button>
-              <Space.Compact>
-                <InputNumber
-                  placeholder="编号"
-                  min={0}
-                  value={numValue}
-                  onChange={(value: any) => setNumValue(value)}
-                  onPressEnter={() => handleAction('num', numValue)}
-                  changeOnWheel
-                />
-                <Button 
-                  type="primary" 
-                  onClick={() => handleAction('num', numValue)}
+                <Popconfirm
+                  title="确认强制通过？"
+                  description="此操作将绕过常规审核流程。"
+                  onConfirm={() => handleAction('approveforce')}
+                  okText="确认"
+                  cancelText="取消"
                 >
-                  提交
-                </Button>
-              </Space.Compact>
-              <Space.Compact>
-                <Input
-                  placeholder="评论"
-                  value={commentValue}
-                  onChange={(e) => setCommentValue(e.target.value)}
-                />
-                <Button 
-                  type="primary" 
-                  onClick={() => handleAction('comment', commentValue)}
+                  <Button icon={<SafetyOutlined />} type="dashed">强制通过</Button>
+                </Popconfirm>
+                <Popconfirm
+                  title="确认强制拒绝？"
+                  description="此操作将绕过常规审核流程。"
+                  onConfirm={() => handleAction('rejectforce')}
+                  okText="确认"
+                  cancelText="取消"
                 >
-                  提交
+                  <Button icon={<SafetyOutlined />} type="dashed">强制拒绝</Button>
+                </Popconfirm>
+                <Popconfirm
+                  title="确认拉黑此用户？"
+                  description="该用户将无法再发布内容。（其实是还没写解封）"
+                  onConfirm={() => handleAction('block')}
+                  okText="确认"
+                  cancelText="取消"
+                >
+                  <Button type="primary" danger ghost icon={<BlockOutlined />}>拉黑</Button>
+                </Popconfirm>
+                <Button icon={<SyncOutlined />} onClick={() => handleAction('retrial')}>重审</Button>
+                <Button icon={<UserSwitchOutlined />} onClick={() => handleAction('togglenick')}>切换匿名</Button>
+                <Button icon={<TagsOutlined />} onClick={() => handleAction('tag')} disabled={tagCooldown > 0}>
+                  {tagCooldown > 0 ? `更新标签 (${tagCooldown}s)` : '更新标签'}
                 </Button>
-              </Space.Compact>
-            </Flex>
-          </Card>
+                <Button icon={<SendOutlined />} onClick={() => handleAction('repush')} disabled={repushCooldown > 0}>
+                  {repushCooldown > 0 ? `重新推送 (${repushCooldown}s)` : '重新推送'}
+                </Button>
+                <Space.Compact>
+                  <InputNumber placeholder="编号" min={0} value={numValue} onChange={(value: any) => setNumValue(value)} onPressEnter={() => handleAction('num', numValue)} changeOnWheel/>
+                  <Button type="primary" onClick={() => handleAction('num', numValue)}>提交</Button>
+                </Space.Compact>
+                <Space.Compact>
+                  <Input placeholder="评论" value={commentValue} onChange={(e) => setCommentValue(e.target.value)}/>
+                  <Button type="primary" onClick={() => handleAction('comment', commentValue)}>提交</Button>
+                </Space.Compact>
+              </Flex>
+            </ProCard>
+          </Flex>
+        </Col>
+
+        <Col span={24} order={6}>
+            <ProCard title="帖子图片列表">
+                <Flex gap="small" wrap="wrap">
+                    {post.images.map((img: string, index: number) => (
+                        <Image
+                        key={index}
+                        width={80}
+                        height={80}
+                        src={formatBase64(img)}
+                        preview={{ visible: false }}
+                        style={{ 
+                            cursor: 'pointer', 
+                            objectFit: 'cover',
+                            borderRadius: '4px'
+                        }}
+                        onClick={() => showViewer(index)}
+                        />
+                    ))}
+                </Flex>
+            </ProCard>
         </Col>
       </Row>
-
-      {/* 帖子图片缩略图列表 */}
-      <Card title="帖子图片列表" style={{ marginTop: 16 }}>
-        <Flex gap="small" wrap="wrap">
-          {post.images.map((img: string, index: number) => (
-            <Image
-              key={index}
-              width={80}
-              height={80}
-              src={formatBase64(img)}
-              preview={{ visible: false }}
-              style={{ 
-                cursor: 'pointer', 
-                objectFit: 'cover',
-                borderRadius: '4px'
-              }}
-              onClick={() => showViewer(index)}
-            />
-          ))}
-        </Flex>
-      </Card>
 
       {/* 图片查看器组件 */}
       <Viewer
