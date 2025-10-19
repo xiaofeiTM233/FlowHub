@@ -217,6 +217,23 @@ const ReviewListPage: React.FC = () => {
       header={{
         title: '',
       }}
+      breadcrumb={{
+        items: [
+          {
+            path: '/review',
+            title: '帖子审核',
+          },
+        ],
+        itemRender: (route, params, routes, paths) => {
+          const path = `/${paths.join('/')}`;
+          const isLast = routes.indexOf(route) === routes.length - 1;
+          return isLast ? (
+            <b>{route.title}</b>
+          ) : (
+            <Link href={path}>{route.title}</Link>
+          );
+        },
+      }}
     >
       {/* 审核列表主表格 */}
       <ProTable<PostItem>

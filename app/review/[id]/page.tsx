@@ -5,6 +5,7 @@
 import React, { useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { useParams } from 'next/navigation';
+import Link from 'next/link';
 
 // 第三方库
 import { App, Button, Col, Descriptions, Flex, Image, Popconfirm, Radio, Row, Spin, Result, Input, InputNumber, Space } from 'antd';
@@ -304,6 +305,26 @@ const PostDetailPage: React.FC = () => {
     <PageContainer
       header={{
         title: '',
+      }}
+      breadcrumb={{
+        items: [
+          {
+            path: '/review',
+            title: '帖子审核',
+          },
+          {
+            title: id,
+          },
+        ],
+        itemRender: (route, params, routes, paths) => {
+          const path = `/${paths.join('/')}`;
+          const isLast = routes.indexOf(route) === routes.length - 1;
+          return isLast ? (
+            <b>{route.title}</b>
+          ) : (
+            <Link href={path}>{route.title}</Link>
+          );
+        },
       }}
     >
       <Row gutter={[16, 16]}>

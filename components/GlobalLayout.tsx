@@ -51,7 +51,7 @@ const GlobalLayout = ({ children }: { children: React.ReactNode }) => {
             return item.path ? <Link href={item.path}>{dom}</Link> : dom;
           }}
           actionsRender={() => [
-            <Space key="theme-switch" size="small">
+            <Space key="theme-switch" size="small" style={{ padding: 0 }}>
               <span>{dark ? '🌜' : '🌞'}</span>
               <Switch
                 checked={dark}
