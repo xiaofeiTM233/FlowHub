@@ -1,3 +1,4 @@
+// app/api/review/list/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import Draft from '@/models/drafts';
