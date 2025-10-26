@@ -4,8 +4,9 @@ import mongoose, { Mongoose } from 'mongoose';
 const MONGODB_URI = process.env.MONGODB_URI;
 
 if (!MONGODB_URI) {
+  console.error('❌ MONGODB_URI 环境变量未定义');
   throw new Error(
-    '请在 .env.local 文件中定义 MONGODB_URI 环境变量'
+    '请在 .env 文件中定义 MONGODB_URI 环境变量'
   );
 }
 

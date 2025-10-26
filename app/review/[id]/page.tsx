@@ -5,7 +5,6 @@
 import React, { useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { useParams } from 'next/navigation';
-import Link from 'next/link';
 
 // 第三方库
 import { App, Button, Col, Descriptions, Flex, Image, Popconfirm, Radio, Row, Spin, Result, Input, InputNumber, Space } from 'antd';
@@ -19,6 +18,7 @@ import Viewer from 'react-viewer';
 
 // 内部组件
 import { ReviewStatus, Stat, Tags } from '@/components/Review';
+import itemRender from '@/components/itemRender';
 
 // 样式文件
 import 'viewerjs/dist/viewer.css';
@@ -316,15 +316,7 @@ const PostDetailPage: React.FC = () => {
             title: id,
           },
         ],
-        itemRender: (route, params, routes, paths) => {
-          const path = `/${paths.join('/')}`;
-          const isLast = routes.indexOf(route) === routes.length - 1;
-          return isLast ? (
-            <b>{route.title}</b>
-          ) : (
-            <Link href={path}>{route.title}</Link>
-          );
-        },
+        itemRender
       }}
     >
       <Row gutter={[16, 16]}>
