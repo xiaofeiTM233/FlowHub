@@ -1,10 +1,10 @@
 // app/layout.tsx
 import type { Metadata } from "next";
-import '@ant-design/v5-patch-for-react-19';
 import { Geist, Geist_Mono } from "next/font/google";
 import React from 'react';
 import { App } from 'antd';
 import GlobalLayout from '@/components/GlobalLayout';
+import Providers from '@/components/provides';
 import "@/app/globals.css";
 
 const geistSans = Geist({
@@ -34,7 +34,11 @@ export default function RootLayout({
         style={{ background: 'var(--background)', color: 'var(--foreground)', minHeight: '100vh', margin: 0 }}
       >
         <App>
-          <GlobalLayout>{children}</GlobalLayout>
+          <Providers>
+            <GlobalLayout>
+              {children}
+            </GlobalLayout>
+          </Providers>
         </App>
       </body>
     </html>

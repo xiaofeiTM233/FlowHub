@@ -4,11 +4,13 @@
 // React 相关
 import React, { useRef, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 // 第三方库
 import { App, Popconfirm } from 'antd';
 import { ActionType, PageContainer, ProTable } from '@ant-design/pro-components';
 import type { ProColumns } from '@ant-design/pro-components';
+import { useSession } from 'next-auth/react';
 import axios from 'axios';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
@@ -16,6 +18,7 @@ import Viewer from 'react-viewer';
 
 // 内部组件
 import { Stat, Tags } from '@/components/Review';
+import itemRender from '@/components/itemRender';
 
 // 样式文件
 import 'dayjs/locale/zh-cn';
@@ -46,14 +49,42 @@ const ReviewListPage: React.FC = () => {
   // 获取消息提示 API
   const { message } = App.useApp();
 
+  // 路由对象
+  const router = useRouter();
+
+  // 获取用户会话信息
+  const { data: session, status } = useSession({
+    required: true,
+    onUnauthenticated() {
+      message.warning('请先登录');
+      router.push('/dashboard/login');
+    },
+  }) as { data: any, status: string };
+
   /**
    * 处理帖子预览功能
    * 打开图片查看器显示帖子图片
    * @param record - 帖子记录数据
    */
   const handlePreview = (record: PostItem) => {
-    // TODO: 实现帖子预览功能
-    // 可以显示帖子的图片、内容等信息
+    // 获取帖子中的图片数据
+    const images = record.images || [];
+    if (images.length === 0) {
+      message.info('该帖子没有图片内容');
+      return;
+    }
+    // 转换图片数据格式为 Viewer 组件需要的格式
+    const viewerImageList = images.map((img: string) => {
+      const src = `data:image/png;base64,${img}`;
+      return {
+        src,
+        alt: '预览图'
+      };
+    });
+    
+    // 设置图片数据并显示查看器
+    setViewerImages(viewerImageList);
+    setViewerVisible(true);
   };
 
   /**
@@ -63,10 +94,7 @@ const ReviewListPage: React.FC = () => {
    * @param postId - 帖子唯一标识ID
    */
   const handleReviewAction = async (action: 'approve' | 'reject', postId: string) => {
-    // TODO: 从 Cookies 或认证状态获取管理员ID
-    const midFromCookie = 'user-123-admin';
-
-    // 显示加载提示，使用统一的 key 避免重复消息
+    // 显示加载提示
     message.loading({ content: '正在处理...', key: 'reviewAction' });
 
     try {
@@ -74,7 +102,7 @@ const ReviewListPage: React.FC = () => {
       const response = await axios.post('/api/review', {
         action,
         data: { cid: postId },
-        auth: { mid: midFromCookie },
+        auth: { mid: session?.user?.mid  },
       });
 
       if (response.data.success) {
@@ -224,15 +252,7 @@ const ReviewListPage: React.FC = () => {
             title: '帖子审核',
           },
         ],
-        itemRender: (route, params, routes, paths) => {
-          const path = `/${paths.join('/')}`;
-          const isLast = routes.indexOf(route) === routes.length - 1;
-          return isLast ? (
-            <b>{route.title}</b>
-          ) : (
-            <Link href={path}>{route.title}</Link>
-          );
-        },
+        itemRender
       }}
     >
       {/* 审核列表主表格 */}
