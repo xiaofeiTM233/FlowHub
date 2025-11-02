@@ -179,7 +179,8 @@ export async function POST(request: Request) {
         message: '渲染完成并已推送待审',
         data: {
           cid: draft._id,
-          //base64: image,
+          timestamp: draft.timestamp,
+          base64: image,
           result
         }
       });
