@@ -1,6 +1,8 @@
 // app/api/posts/delete/route.ts
+import { NextRequest, NextResponse } from "next/server";
 import { biliDelete } from '@/lib/adapter/bili';
 import { qzoneDelete } from '@/lib/adapter/qzone';
+import { authApi } from "@/lib/auth";
 import dbConnect from '@/lib/db';
 import Account from '@/models/accounts';
 import Post from '@/models/posts';
@@ -10,14 +12,22 @@ import Post from '@/models/posts';
  * @param request 包含帖子 _id 的 POST 请求
  * @returns 各平台删除结果
  */
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   await dbConnect();
+  // 鉴权
+  const user = await authApi(request);
+  if (!user) {
+    return NextResponse.json({
+      code: -4,
+      message: 'Unauthorized'
+    }, { status: 401 });
+  }
   const body = await request.json();
   const { _id } = body;
 
   // 1. 检查请求体中是否包含 _id
   if (!_id) {
-    return Response.json({
+    return NextResponse.json({
       code: -1,
       message: "缺少 _id 参数"
     }, { status: 400 });
@@ -26,7 +36,7 @@ export async function POST(request: Request) {
   // 2. 根据 _id 查找帖子
   const post = await Post.findById(_id);
   if (!post) {
-    return Response.json({
+    return NextResponse.json({
       code: -1,
       message: `未找到该帖子`
     }, { status: 404 });
@@ -34,7 +44,7 @@ export async function POST(request: Request) {
 
   // 如果帖子已经是删除状态，可以提前返回
   if (post.type === 'deleted') {
-    return Response.json({
+    return NextResponse.json({
       code: 1,
       message: "该帖子已被删除"
     }, { status: 200 });
@@ -73,7 +83,7 @@ export async function POST(request: Request) {
   await post.save();
 
   // 5. 返回处理结果
-  return Response.json({
+  return NextResponse.json({
     code: 0,
     message: "删除成功",
     data: deleteResults

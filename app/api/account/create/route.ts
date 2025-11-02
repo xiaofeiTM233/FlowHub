@@ -1,4 +1,6 @@
 // app/api/account/create/route.ts
+import { NextRequest, NextResponse } from "next/server";
+import { authApi } from "@/lib/auth";
 import dbConnect from '@/lib/db';
 import Account from '@/models/accounts';
 
@@ -7,10 +9,19 @@ import Account from '@/models/accounts';
  * @param request 包含账号对象的请求体
  * @returns 操作结果及平台账号对象
  */
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   await dbConnect();
+  // 鉴权
+  const user = await authApi(request);
+  if (!user) {
+    return NextResponse.json({
+      code: -4,
+      message: 'Unauthorized'
+    }, { status: 401 });
+  }
+  // 解析请求参数
   const { platform, aid, auth, uid, cookies, stats } = await request.json();
-
+  // 查找并更新账号
   const theAccount = await Account.findOneAndUpdate(
     { aid },
     { platform, aid, auth, uid, cookies, stats },
@@ -20,8 +31,8 @@ export async function POST(request: Request) {
       setDefaultsOnInsert: true
     }
   );
-
-  return Response.json({
+  // 返回操作结果
+  return NextResponse.json({
     code: 0,
     message: '平台账号已更新',
     account: theAccount

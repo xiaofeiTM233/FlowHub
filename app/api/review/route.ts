@@ -1,34 +1,44 @@
 // app/api/drafts/review/route.ts
+import { NextRequest, NextResponse } from "next/server";
+import { pushReview, getTags } from '@/lib/review';
+import { publish } from '@/lib/publish';
+import { authApi } from "@/lib/auth";
+import dbConnect from '@/lib/db';
 import Draft from '@/models/drafts';
 import Post from '@/models/posts';
 import Account from '@/models/accounts';
 import Option from '@/models/options';
-import { pushReview, getTags } from '@/lib/review';
-import dbConnect from '@/lib/db';
-import { publish } from '@/lib/publish';
 
 /**
  * 获取帖子的审核信息
  * @param request 请求应包含查询参数 cid
  * @returns 帖子的 review 字段内容
  */
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   try {
+    await dbConnect();
+    // 鉴权
+    const user = await authApi(request);
+    if (!user) {
+      return NextResponse.json({
+        code: -4,
+        message: 'Unauthorized'
+      }, { status: 401 });
+    }
     // 获取 cid
     const searchParams = new URLSearchParams(request.url.split('?')[1]);
     const cid = searchParams.get('cid');
     // 1. 验证参数
     if (!cid) {
-      return Response.json({
+      return NextResponse.json({
         code: -1,
         message: "缺少参数"
       }, { status: 400 });
     }
-    await dbConnect();
     // 2. 根据 cid (即 _id) 查找帖子
     let draft = await Draft.findById(cid);
     if (!draft) {
-      return Response.json({
+      return NextResponse.json({
         code: -1,
         message: `未找到ID为 ${cid} 的帖子`
       }, { status: 404 });
@@ -39,14 +49,14 @@ export async function GET(request: Request) {
     delete draft.review;
     delete draft.content.list;
     // 3. 返回帖子内容
-    return Response.json({
+    return NextResponse.json({
       code: 0,
       message: "获取审核信息成功",
       data: draft || {}
     }, { status: 200 });
   } catch (error: any) {
     console.error('获取审核信息失败:', error);
-    return Response.json({
+    return NextResponse.json({
       code: -1,
       message: error.message || '服务器内部错误'
     }, { status: 500 });
@@ -85,13 +95,13 @@ export async function POST(request: Request) {
       }
       cid = draft._id;
     } catch(e) {
-      return Response.json({
+      return NextResponse.json({
         code: -1,
         message: `未找到ID为 ${cid || body.data.timestamp} 的帖子`
       }, { status: 404 });
     }
     if (draft.type !== 'pending' && action !== 'retrial') {
-      return Response.json({
+      return NextResponse.json({
         code: -1,
         message: `ID为 ${cid} 的帖子不在审核状态`
       }, { status: 400 });
@@ -144,7 +154,7 @@ export async function POST(request: Request) {
         break;
       case 'raw': // 获取原始内容
         const raw = draft.content;
-        return Response.json({
+        return NextResponse.json({
           code: 0,
           message: `获取原始内容`,
           data: raw
@@ -152,7 +162,7 @@ export async function POST(request: Request) {
       case 'num': // 设置编号
         const num = body.data.num;
         if (typeof num !== 'number' || isNaN(num) || !Number.isInteger(num) || num <= 0) {
-          return Response.json({
+          return NextResponse.json({
             code: -1,
             message: `编号必须是一个大于 0 的整数`,
             data: { error_number: num }
@@ -161,7 +171,7 @@ export async function POST(request: Request) {
         option.last_number = num;
         draft.num = num;
         await draft.save();
-        return Response.json({
+        return NextResponse.json({
           code: 0,
           message: `已设定上次编号和当前稿件编号为${num}${option.publish_direct ? '，请尽快发布该帖子避免编号顺序异常' : ''}`,
           data: { last_number: num }
@@ -176,13 +186,13 @@ export async function POST(request: Request) {
           draft.content.userid = draft.sender.userid;
         }
         await draft.save();
-        return Response.json({
+        return NextResponse.json({
           code: 0,
           message: `已切换 ${draft._id} 稿件为${draft.nick ? '匿名' : '非匿名'}，请考虑重新渲染稿件`
         }, { status: 200 });
       case 'sender': // 获取发帖人信息
         const sender = draft.sender;
-        return Response.json({
+        return NextResponse.json({
           code: 0,
           message: `获取原始内容`,
           data: sender
@@ -192,13 +202,13 @@ export async function POST(request: Request) {
           const tags = await getTags(draft.content);
           draft.tags = tags.data;
           await draft.save();
-          return Response.json({
+          return NextResponse.json({
             code: 0,
             message: `获取标签`,
             data: tags.data
           }, { status: 200 });
         } else {
-          return Response.json({
+          return NextResponse.json({
             code: -1,
             message: `未配置 AI 标签服务`
           }, { status: 400 });
@@ -207,13 +217,13 @@ export async function POST(request: Request) {
         const aid = option.review_push_platform;
         const account = await Account.findOne({ aid });
         const repush = await pushReview(account, draft, draft.images[0], option);
-        return Response.json({
+        return NextResponse.json({
           code: 0,
           message: `已重新推送投稿 ${draft._id}`,
           data: repush
         }, { status: 200 });
       default: // 默认返回错误
-        return Response.json({
+        return NextResponse.json({
           code: -1,
           message: `不支持的操作: ${action}`
         }, { status: 400 });
@@ -267,7 +277,7 @@ export async function POST(request: Request) {
     await option.save();
 
     // 返回响应
-    return Response.json({
+    return NextResponse.json({
       code: 0,
       message: result,
       data: draft.review,
@@ -276,7 +286,7 @@ export async function POST(request: Request) {
 
   } catch (error: any) {
     console.error('执行审核操作失败:', error);
-    return Response.json({
+    return NextResponse.json({
       code: -1,
       message: error.message || '服务器内部错误'
     }, { status: 500 });

@@ -2,26 +2,28 @@
 import path from 'path';
 import axios from 'axios';
 import { readFile } from 'fs/promises';
+import { NextRequest, NextResponse } from "next/server";
+import { pushReview } from '@/lib/review';
+import { render } from '@/lib/renderer';
+import { authApi } from "@/lib/auth";
 import dbConnect from '@/lib/db';
 import Draft from '@/models/drafts';
 import Account from '@/models/accounts';
 import Option from '@/models/options';
-import { pushReview } from '@/lib/review';
-import { render } from '@/lib/renderer';
 
 /**
  * 接收投稿数据，渲染成 HTML 返回
  * @param request 包含投稿内容的请求
  * @returns 渲染后的 HTML
  */
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   try {
     // 获取 cid
     const searchParams = new URLSearchParams(request.url.split('?')[1]);
     const cid = searchParams.get('cid');
     // 1. 验证参数
     if (!cid) {
-      return Response.json({
+      return NextResponse.json({
         code: -1,
         message: "缺少参数"
       }, { status: 400 });
@@ -30,7 +32,7 @@ export async function GET(request: Request) {
     // 2. 根据 cid (即 _id) 查找帖子
     let draft = await Draft.findById(cid);
     if (!draft) {
-      return Response.json({
+      return NextResponse.json({
         code: -1,
         message: `未找到ID为 ${cid} 的帖子`
       }, { status: 404 });
@@ -54,7 +56,7 @@ export async function GET(request: Request) {
     });
   } catch (error: any) {
     console.error('获取帖子信息失败:', error);
-    return Response.json({
+    return NextResponse.json({
       code: -1,
       message: error.message || '服务器内部错误'
     }, { status: 500 });
@@ -66,10 +68,18 @@ export async function GET(request: Request) {
  * @param request 包含投稿内容的请求
  * @returns 渲染后的 PNG 图片
  */
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
     // 1. 连接数据库并解析请求体
     await dbConnect();
+    // 鉴权
+    const user = await authApi(request);
+    if (!user) {
+      return NextResponse.json({
+        code: -4,
+        message: 'Unauthorized'
+      }, { status: 401 });
+    }
     const body = await request.json();
     // 2. 获取配置选项
     let option = await Option.findById('000000000000000000000000');
@@ -84,7 +94,7 @@ export async function POST(request: Request) {
     if (body.cid) {
       draft = await Draft.findById(body.cid);
       if (!draft) {
-        return Response.json({
+        return NextResponse.json({
           code: -1,
           message: `未找到该记录`
         }, { status: 404 });
@@ -136,7 +146,7 @@ export async function POST(request: Request) {
         image = cfrender.data[outputType];
       }
     } else {
-      return Response.json({
+      return NextResponse.json({
         code: -1,
         message: '服务器内部错误',
         error: '未设置渲染函数'
@@ -144,7 +154,7 @@ export async function POST(request: Request) {
     }
     if (outputType === 'buffer') {
       await draft.save();
-      return new Response(image, {
+      return new NextResponse(image, {
         status: 200,
         headers: {
           'Content-Type': 'image/png',
@@ -153,7 +163,7 @@ export async function POST(request: Request) {
     }
     if (outputType === 'html') {
       await draft.save();
-      return new Response(image, {
+      return new NextResponse(image, {
         status: 200,
         headers: {
           'Content-Type': 'text/html',
@@ -174,7 +184,7 @@ export async function POST(request: Request) {
       const aid = option.review_push_platform;
       const account = await Account.findOne({ aid });
       const result = await pushReview(account, draft, image, option);
-      return Response.json({
+      return NextResponse.json({
         code: 0,
         message: '渲染完成并已推送待审',
         data: {
@@ -186,7 +196,7 @@ export async function POST(request: Request) {
       });
     }
     await draft.save();
-    return Response.json({
+    return NextResponse.json({
       code: 0,
       message: '渲染完成',
       data: {
@@ -196,7 +206,7 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     console.error('[Render] 渲染失败:', error);
-    return Response.json(
+    return NextResponse.json(
       { code: -1, message: '服务器内部错误', error: error instanceof Error ? error.message : '发生未知错误' },
       { status: 500 }
     );

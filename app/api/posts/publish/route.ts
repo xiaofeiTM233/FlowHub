@@ -1,6 +1,8 @@
 // app/api/publish/route.ts
-import dbConnect from '@/lib/db';
+import { NextRequest, NextResponse } from "next/server";
 import { publish } from '@/lib/publish';
+import { authApi } from "@/lib/auth";
+import dbConnect from '@/lib/db';
 import Post from '@/models/posts';
 
 /**
@@ -8,8 +10,16 @@ import Post from '@/models/posts';
  * @param request 包含 _id 或完整帖子内容的请求体
  * @returns 各平台发布结果
  */
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   await dbConnect();
+  // 鉴权
+  const user = await authApi(request);
+  if (!user) {
+    return NextResponse.json({
+      code: -4,
+      message: 'Unauthorized'
+    }, { status: 401 });
+  }
   const body = await request.json();
   let post;
 
@@ -17,7 +27,7 @@ export async function POST(request: Request) {
   if (body._id) {
     post = await Post.findById(body._id);
     if (!post) {
-      return Response.json({
+      return NextResponse.json({
         code: -1,
         message: `未找到该帖子`
       }, { status: 404 });
@@ -36,7 +46,7 @@ export async function POST(request: Request) {
   
   // 如果是已发布状态，直接返回结果
   if (post.type === 'published') {
-    return Response.json({
+    return NextResponse.json({
       code: 1,
       message: "published",
       data: results
@@ -52,7 +62,7 @@ export async function POST(request: Request) {
   post.markModified && post.markModified('results');
   await post.save();
   // 4. 返回处理结果
-  return Response.json({
+  return NextResponse.json({
     code: 0,
     message: "success",
     data: results
