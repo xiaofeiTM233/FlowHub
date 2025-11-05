@@ -4,7 +4,7 @@
 // React 相关
 import React, { useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 
 // 第三方库
 import { App, Button, Col, Descriptions, Flex, Image, Popconfirm, Radio, Row, Spin, Result, Input, InputNumber, Space } from 'antd';
@@ -15,6 +15,7 @@ import dayjs from 'dayjs';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import Viewer from 'react-viewer';
+import { useSession } from 'next-auth/react';
 
 // 内部组件
 import { ReviewStatus, Stat, Tags } from '@/components/Review';
@@ -63,6 +64,18 @@ const PostDetailPage: React.FC = () => {
   const [tagCooldown, setTagCooldown] = useState(0);
   const [repushCooldown, setRepushCooldown] = useState(0);
 
+  // 路由对象
+  const router = useRouter();
+
+  // 获取用户会话信息
+  const { data: session, status } = useSession({
+    required: true,
+    onUnauthenticated() {
+      message.warning('请先登录');
+      router.push('/dashboard/login');
+    },
+  }) as { data: any, status: string };
+
   // 常量定义
   const height = '500px';
 
@@ -108,9 +121,6 @@ const PostDetailPage: React.FC = () => {
    * @param value 可选的操作值（如评论内容、编号）
    */
   const handleAction = async (action: string, value?: string | number) => {
-    // TODO: 从Cookies获取管理员ID
-    const midFromCookie = 'user-123-admin';
-
     // 显示加载提示
     const actionKey = `action-${action}-${Date.now()}`;
     message.loading({ content: '正在处理...', key: actionKey });
@@ -119,7 +129,7 @@ const PostDetailPage: React.FC = () => {
     const requestBody: any = {
       action,
       data: { cid: id },
-      auth: { mid: midFromCookie },
+      auth: { mid: session.mid },
     };
 
     // 如果有额外的值，添加到请求体
@@ -442,25 +452,25 @@ const PostDetailPage: React.FC = () => {
         </Col>
 
         <Col span={24} order={6}>
-            <ProCard title="帖子图片列表">
-                <Flex gap="small" wrap="wrap">
-                    {post.images.map((img: string, index: number) => (
-                        <Image
-                        key={index}
-                        width={80}
-                        height={80}
-                        src={formatBase64(img)}
-                        preview={{ visible: false }}
-                        style={{ 
-                            cursor: 'pointer', 
-                            objectFit: 'cover',
-                            borderRadius: '4px'
-                        }}
-                        onClick={() => showViewer(index)}
-                        />
-                    ))}
-                </Flex>
-            </ProCard>
+          <ProCard title="帖子图片列表">
+            <Flex gap="small" wrap="wrap">
+              {post.images.map((img: string, index: number) => (
+                <Image
+                  key={index}
+                  width={80}
+                  height={80}
+                  src={formatBase64(img)}
+                  preview={{ visible: false }}
+                  style={{ 
+                    cursor: 'pointer', 
+                    objectFit: 'cover',
+                    borderRadius: '4px'
+                  }}
+                  onClick={() => showViewer(index)}
+                />
+              ))}
+              </Flex>
+          </ProCard>
         </Col>
       </Row>
 

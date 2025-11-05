@@ -68,10 +68,18 @@ export async function GET(request: NextRequest) {
  * @param request 请求体包含 cid, action 和其他可能的参数
  * @returns 操作结果
  */
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     await dbConnect();
+    // 鉴权
+    const user = await authApi(request);
+    if (!user) {
+      return NextResponse.json({
+        code: -4,
+        message: 'Unauthorized'
+      }, { status: 401 });
+    }
     
     // 获取配置选项
     let option = await Option.findById('000000000000000000000000');
@@ -80,7 +88,7 @@ export async function POST(request: Request) {
       option = new Option({ _id: '000000000000000000000000' });
     }
     
-    let mid = body.auth.mid;
+    let mid = user.mid;
     let action = body.action;
     let reason = body.data.reason || '无理由';
     let cid = body.data.cid;
