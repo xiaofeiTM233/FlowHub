@@ -11,6 +11,7 @@
   "dependencies": {
     "@ant-design/cssinjs": "^1.24.0",
     "@ant-design/pro-components": "^2.8.10",
+    "@ant-design/v5-patch-for-react-19": "^1.0.3",
     "antd": "^5.27.5",
     "axios": "^1.12.2",
     "dayjs": "^1.11.18",
@@ -21,8 +22,8 @@
     "next-auth": "^5.0.0-beta.30",
     "puppeteer-core": "^24.22.0",
     "qrcode": "^1.5.4",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
     "react-syntax-highlighter": "^15.6.6",
     "react-viewer": "^3.2.2",
     "viewerjs": "^1.11.7"

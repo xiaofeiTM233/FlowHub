@@ -1,5 +1,4 @@
 // app/menu.tsx
-import React from 'react';
 import {
   HomeOutlined,       // 首页
   AuditOutlined,      // 审核管理
