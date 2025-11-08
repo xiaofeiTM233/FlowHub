@@ -141,22 +141,22 @@ export async function POST(request: NextRequest) {
         break;
       case 'approveforce': // 强制通过
         draft.type = 'approved';
-        draft.review.comments.push({mid, reason: `强制通过：${reason}`});
+        draft.review.comments.push({mid, reason: `强制通过：${reason}`, timestmap: Date.now()});
         result = `对帖子 ${cid} 执行：强制通过`;
         break;
       case 'rejectforce': // 强制拒绝
         draft.type = 'rejected';
-        draft.review.comments.push({mid, reason: `强制拒绝：${reason}`});
+        draft.review.comments.push({mid, reason: `强制拒绝：${reason}`, timestmap: Date.now()});
         result = `对帖子 ${cid} 执行：强制拒绝`;
         break;
       case 'block': // 拉黑
         draft.type = 'rejected';
-        draft.review.comments.push({mid, reason: `拉黑：${reason}`});
+        draft.review.comments.push({mid, reason: `拉黑：${reason}`, timestmap: Date.now()});
         // 还没写拉黑逻辑
         result = `对帖子 ${cid} 执行：拉黑`;
         break;
       case 'comment': // 评论
-        draft.review.comments.push({mid, reason});
+        draft.review.comments.push({mid, reason, timestmap: Date.now()});
         // 还没写评论推送
         result = `对帖子 ${cid} 评论：${reason}`;
         break;

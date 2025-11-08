@@ -7,8 +7,8 @@ import dynamic from 'next/dynamic';
 import { useParams, useRouter } from 'next/navigation';
 
 // 第三方库
-import { App, Button, Col, Descriptions, Flex, Image, Popconfirm, Radio, Row, Spin, Result, Input, InputNumber, Space } from 'antd';
-import { SyncOutlined, UserSwitchOutlined, BlockOutlined, TagsOutlined, SendOutlined, SafetyOutlined } from '@ant-design/icons';
+import { App, Button, Col, Descriptions, Flex, Image, Popconfirm, Radio, Row, Spin, Result, Input, InputNumber, Space, Timeline, Avatar, Tooltip } from 'antd';
+import { SyncOutlined, UserSwitchOutlined, BlockOutlined, TagsOutlined, SendOutlined, SafetyOutlined, UserOutlined } from '@ant-design/icons';
 import { PageContainer, ProCard } from '@ant-design/pro-components';
 import axios from 'axios';
 import dayjs from 'dayjs';
@@ -122,45 +122,37 @@ const PostDetailPage: React.FC = () => {
    */
   const handleAction = async (action: string, value?: string | number) => {
     // 显示加载提示
-    const actionKey = `action-${action}-${Date.now()}`;
-    message.loading({ content: '正在处理...', key: actionKey });
-
+    const key = `action-${action}-${Date.now()}`;
+    message.loading({ content: '正在处理...', key });
+    // 特殊处理需要前端状态更新的操作
+    if (action === 'comment') setCommentValue('');
+    if (action === 'num') setNumValue('');
+    if (action === 'tag') setTagCooldown(60);
+    if (action === 'repush') setRepushCooldown(60);
     // 构造请求体
-    const requestBody: any = {
+    const body: any = {
       action,
       data: { cid: id },
       auth: { mid: session.mid },
     };
-
     // 如果有额外的值，添加到请求体
-    if (value !== undefined) {
-      requestBody.data.value = value;
+    if (value) {
+      body.data.reason = value;
     }
-
     try {
-      const response = await axios.post('/api/review', requestBody);
-
-      if (response.data.success) {
-        message.success({ content: response.data.message || '操作成功', key: actionKey });
-        // 特殊处理需要前端状态更新的操作
-        if (action === 'comment') setCommentValue('');
-        if (action === 'num') setNumValue('');
-        if (action === 'tag') setTagCooldown(60);
-        if (action === 'repush') setRepushCooldown(60);
-
-        // TODO: 可能需要根据操作类型刷新帖子数据
-        // fetchPost(); 
+      const response = await axios.post('/api/review', body);
+      if (response.data.code === 0) {
+        message.success({ content: response.data.message || '操作成功', key });
       } else {
         throw new Error(response.data.message || '操作失败');
       }
     } catch (error: any) {
       message.error({
         content: error.response?.data?.message || error.message || '请求失败',
-        key: actionKey,
+        key,
       });
     }
   };
-
 
   /**
    * 格式化 Base64 图片数据
@@ -269,6 +261,15 @@ const PostDetailPage: React.FC = () => {
         
       case 'edit':
         // JSON 编辑
+        if (session?.user?.role !== 'sysop') {
+          return (
+            <Result
+              status="403"
+              title="403"
+              subTitle="抱歉，您没有权限编辑此内容。"
+            />
+          );
+        }
         return (
           <div style={{ 
             maxHeight: height, 
@@ -333,7 +334,7 @@ const PostDetailPage: React.FC = () => {
         <Col xs={{ span: 24, order: 1 }} md={{ span: 16, order: 1 }}>
           <ProCard>
             <Flex justify="space-between" align="center" style={{ minHeight: 32 }}>
-              <strong>帖子ID: {post._id}</strong>
+              <strong>帖子ID: {post._id} （{post.timestamp}）</strong>
               <span>
                 发布于: {dayjs(post.createdAt).format('YYYY-MM-DD HH:mm:ss')}
               </span>
@@ -353,7 +354,7 @@ const PostDetailPage: React.FC = () => {
                 <Radio.Button value="image">Image</Radio.Button>
                 <Radio.Button value="html">HTML</Radio.Button>
                 <Radio.Button value="json">JSON</Radio.Button>
-                <Radio.Button value="edit">Edit</Radio.Button>
+                {session?.user?.role === 'sysop' && <Radio.Button value="edit">Edit</Radio.Button>}
               </Radio.Group>
             </Flex>
           </ProCard>
@@ -439,12 +440,12 @@ const PostDetailPage: React.FC = () => {
                   {repushCooldown > 0 ? `重新推送 (${repushCooldown}s)` : '重新推送'}
                 </Button>
                 <Space.Compact>
-                  <InputNumber placeholder="编号" min={0} value={numValue} onChange={(value: any) => setNumValue(value)} onPressEnter={() => handleAction('num', numValue)} changeOnWheel/>
-                  <Button type="primary" onClick={() => handleAction('num', numValue)}>提交</Button>
+                  <InputNumber placeholder="编号" min={0} value={numValue} onChange={(value: any) => setNumValue(value)} onPressEnter={() => numValue && handleAction('num', numValue)} changeOnWheel/>
+                  <Button type="primary" onClick={() => handleAction('num', numValue)} disabled={!numValue || numValue === ''}>提交</Button>
                 </Space.Compact>
                 <Space.Compact>
-                  <Input placeholder="评论" value={commentValue} onChange={(e) => setCommentValue(e.target.value)}/>
-                  <Button type="primary" onClick={() => handleAction('comment', commentValue)}>提交</Button>
+                  <Input placeholder="评论" value={commentValue} onChange={(e) => setCommentValue(e.target.value)} onPressEnter={() => commentValue && handleAction('comment', commentValue)}/>
+                  <Button type="primary" onClick={() => handleAction('comment', commentValue)} disabled={!commentValue || commentValue.trim() === ''}>提交</Button>
                 </Space.Compact>
               </Flex>
             </ProCard>
@@ -470,6 +471,46 @@ const PostDetailPage: React.FC = () => {
                 />
               ))}
               </Flex>
+          </ProCard>
+        </Col>
+
+        <Col span={24} order={7}>
+          <ProCard title="审核评论">
+            {post.review?.comments?.length > 0 ? (
+              <Timeline 
+                mode="left"
+                items={post.review.comments.map((comment: any, index: number) => ({
+                  key: index,
+                  label: (
+                    <Tooltip 
+                      title={
+                        <div
+                          style={{ display: 'flex' }}
+                        >
+                          <Avatar
+                            size='large'
+                            icon={<UserOutlined />}
+                            src={`http://q.qlogo.cn/headimg_dl?dst_uin=${comment.mid}&spec=640&img_type=jpg`}
+                            style={{ marginRight: 5 }}
+                          />
+                          <div>
+                            <b>{comment.mid}</b>
+                            <p>{dayjs(comment.timestamp).format('YYYY-MM-DD HH:mm:ss')}</p>
+                          </div>
+                        </div>
+                      }
+                    >
+                      {comment.mid}
+                    </Tooltip>
+                  ),
+                  children: comment.reason
+                }))}
+              />
+            ) : (
+              <div style={{ textAlign: 'center', color: '#999', padding: '20px' }}>
+                暂无审核评论
+              </div>
+            )}
           </ProCard>
         </Col>
       </Row>
