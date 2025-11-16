@@ -93,6 +93,18 @@ export async function POST(request: NextRequest) {
     let reason = body.data.reason || '无理由';
     let cid = body.data.cid;
 
+    if (!action) {
+      return NextResponse.json({
+        code: -1,
+        message: `不支持的操作`
+      }, { status: 400 });
+    } else if (!['approve', 'reject', 'comment', 'raw'].includes(action) && !(user?.role === 'admin' || user?.role === 'sysop')) {
+      return NextResponse.json({
+        code: -4,
+        message: 'Unauthorized'
+      }, { status: 401 });
+    }
+
     let result = '';
     let draft;
     try {

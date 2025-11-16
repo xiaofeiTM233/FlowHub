@@ -404,45 +404,49 @@ const PostDetailPage: React.FC = () => {
                 >
                   拒绝
                 </Button>
-                <Popconfirm
-                  title="确认强制通过？"
-                  description="此操作将绕过常规审核流程。"
-                  onConfirm={() => handleAction('approveforce')}
-                  okText="确认"
-                  cancelText="取消"
-                >
-                  <Button icon={<SafetyOutlined />} type="dashed">强制通过</Button>
-                </Popconfirm>
-                <Popconfirm
-                  title="确认强制拒绝？"
-                  description="此操作将绕过常规审核流程。"
-                  onConfirm={() => handleAction('rejectforce')}
-                  okText="确认"
-                  cancelText="取消"
-                >
-                  <Button icon={<SafetyOutlined />} type="dashed">强制拒绝</Button>
-                </Popconfirm>
-                <Popconfirm
-                  title="确认拉黑此用户？"
-                  description="该用户将无法再发布内容。（其实是还没写解封）"
-                  onConfirm={() => handleAction('block')}
-                  okText="确认"
-                  cancelText="取消"
-                >
-                  <Button type="primary" danger ghost icon={<BlockOutlined />}>拉黑</Button>
-                </Popconfirm>
-                <Button icon={<SyncOutlined />} onClick={() => handleAction('retrial')}>重审</Button>
-                <Button icon={<UserSwitchOutlined />} onClick={() => handleAction('anonymous')}>切换匿名</Button>
-                <Button icon={<TagsOutlined />} onClick={() => handleAction('tag')} disabled={tagCooldown > 0}>
-                  {tagCooldown > 0 ? `更新标签 (${tagCooldown}s)` : '更新标签'}
-                </Button>
-                <Button icon={<SendOutlined />} onClick={() => handleAction('repush')} disabled={repushCooldown > 0}>
-                  {repushCooldown > 0 ? `重新推送 (${repushCooldown}s)` : '重新推送'}
-                </Button>
-                <Space.Compact>
-                  <InputNumber placeholder="编号" min={0} value={numValue} onChange={(value: any) => setNumValue(value)} onPressEnter={() => numValue && handleAction('num', numValue)} changeOnWheel/>
-                  <Button type="primary" onClick={() => handleAction('num', numValue)} disabled={!numValue || numValue === ''}>提交</Button>
-                </Space.Compact>
+                {(session?.user?.role === 'admin' || session?.user?.role === 'sysop') && (
+                  <>
+                    <Popconfirm
+                      title="确认强制通过？"
+                      description="此操作将绕过常规审核流程。"
+                      onConfirm={() => handleAction('approveforce')}
+                      okText="确认"
+                      cancelText="取消"
+                    >
+                      <Button icon={<SafetyOutlined />} type="dashed">强制通过</Button>
+                    </Popconfirm>
+                    <Popconfirm
+                      title="确认强制拒绝？"
+                      description="此操作将绕过常规审核流程。"
+                      onConfirm={() => handleAction('rejectforce')}
+                      okText="确认"
+                      cancelText="取消"
+                    >
+                      <Button icon={<SafetyOutlined />} type="dashed">强制拒绝</Button>
+                    </Popconfirm>
+                    <Popconfirm
+                      title="确认拉黑此用户？"
+                      description="该用户将无法再发布内容。（其实是还没写解封）"
+                      onConfirm={() => handleAction('block')}
+                      okText="确认"
+                      cancelText="取消"
+                    >
+                      <Button type="primary" danger ghost icon={<BlockOutlined />}>拉黑</Button>
+                    </Popconfirm>
+                    <Button icon={<SyncOutlined />} onClick={() => handleAction('retrial')}>重审</Button>
+                    <Button icon={<UserSwitchOutlined />} onClick={() => handleAction('anonymous')}>切换匿名</Button>
+                    <Button icon={<TagsOutlined />} onClick={() => handleAction('tag')} disabled={tagCooldown > 0}>
+                      {tagCooldown > 0 ? `更新标签 (${tagCooldown}s)` : '更新标签'}
+                    </Button>
+                   <Button icon={<SendOutlined />} onClick={() => handleAction('repush')} disabled={repushCooldown > 0}>
+                      {repushCooldown > 0 ? `重新推送 (${repushCooldown}s)` : '重新推送'}
+                    </Button>
+                    <Space.Compact>
+                      <InputNumber placeholder="编号" min={0} value={numValue} onChange={(value: any) => setNumValue(value)} onPressEnter={() => numValue && handleAction('num', numValue)} changeOnWheel/>
+                      <Button type="primary" onClick={() => handleAction('num', numValue)} disabled={!numValue || numValue === ''}>提交</Button>
+                    </Space.Compact>
+                  </>
+                )}
                 <Space.Compact>
                   <Input placeholder="评论" value={commentValue} onChange={(e) => setCommentValue(e.target.value)} onPressEnter={() => commentValue && handleAction('comment', commentValue)}/>
                   <Button type="primary" onClick={() => handleAction('comment', commentValue)} disabled={!commentValue || commentValue.trim() === ''}>提交</Button>
