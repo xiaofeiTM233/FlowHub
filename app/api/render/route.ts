@@ -48,7 +48,7 @@ export async function GET(request: NextRequest) {
     data.time = new Date(draft.timestamp + (8 * 60 * 60 * 1000)).toISOString().slice(0, 19).replace('T', ' ');
     html = await render(template, data, 'html');
     // 5. 返回 HTML
-    return new Response(html, {
+    return new NextResponse(html, {
       status: 200,
       headers: {
         'Content-Type': 'text/html',

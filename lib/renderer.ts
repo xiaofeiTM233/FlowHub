@@ -33,7 +33,7 @@ export async function render(
       i++;
       //html += `<div class="list-${i}">${JSON.stringify(msgs)}</div>`;
       if (msgs.length === 1 && msgs[0].type === 'image') {
-        chtml += `<img class="list-${i}" src="${msgs[0].data.url}" data-type="image"/>`;
+        chtml += `<img class="list-${i}" src="${CACHER_URL}${msgs[0].data.url}" data-type="image"/>`;
       } else if (msgs.length === 1 && msgs[0].type === 'json') {
         // 处理卡片消息
         //html += `<div class="list-${i}" data-type="json">${JSON.stringify(msgs[0].data)}</div>`;
