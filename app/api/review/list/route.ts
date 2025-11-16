@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
     // 筛选参数
     const publisher = searchParams.get('publisher');
     const type = searchParams.get('type');
-    const isAnonymous = searchParams.get('sender.nick');
+    const isAnonymous = searchParams.get('anonymous');
     const timeRange = searchParams.get('createdAt');
     // 构建查询条件
     const filter: mongoose.FilterQuery<DraftType> = {};
@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
     }
     // 匿名状态筛选
     if (isAnonymous) {
-      filter['sender.nick'] = isAnonymous === 'true';
+      filter['sender.anonymous'] = isAnonymous === 'true';
     }
     // 时间范围筛选
     if (timeRange) {
@@ -68,7 +68,7 @@ export async function GET(request: NextRequest) {
       .limit(pageSize)
       .lean();
     for (const i of records) {
-      i.nick = i.sender.nick;
+      i.anonymous = i.sender.anonymous;
       delete i.sender;
       i.stat = i.review.stat;
       delete i.review;

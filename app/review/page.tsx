@@ -179,7 +179,7 @@ const ReviewListPage: React.FC = () => {
     },
     {
       title: '匿名状态',
-      dataIndex: 'nick',
+      dataIndex: 'anonymous',
       valueType: 'select',
       valueEnum: { 
         true: { text: '匿名' }, 

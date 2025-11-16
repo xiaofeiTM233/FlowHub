@@ -432,7 +432,7 @@ const PostDetailPage: React.FC = () => {
                   <Button type="primary" danger ghost icon={<BlockOutlined />}>拉黑</Button>
                 </Popconfirm>
                 <Button icon={<SyncOutlined />} onClick={() => handleAction('retrial')}>重审</Button>
-                <Button icon={<UserSwitchOutlined />} onClick={() => handleAction('togglenick')}>切换匿名</Button>
+                <Button icon={<UserSwitchOutlined />} onClick={() => handleAction('anonymous')}>切换匿名</Button>
                 <Button icon={<TagsOutlined />} onClick={() => handleAction('tag')} disabled={tagCooldown > 0}>
                   {tagCooldown > 0 ? `更新标签 (${tagCooldown}s)` : '更新标签'}
                 </Button>

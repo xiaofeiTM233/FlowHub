@@ -8,7 +8,7 @@ const draftSchema = new mongoose.Schema({
   sender: {
     userid: { type: Number, default: 10000 },
     nickname: { type: String, default: '昵称' },
-    nick: { type: Boolean, default: false },
+    anonymous: { type: Boolean, default: false },
     platform: { type: [String], default: [] }
   },
   content: {

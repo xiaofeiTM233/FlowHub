@@ -184,9 +184,9 @@ export async function POST(request: NextRequest) {
           message: `已设定上次编号和当前稿件编号为${num}${option.publish_direct ? '，请尽快发布该帖子避免编号顺序异常' : ''}`,
           data: { last_number: num }
         }, { status: 200 });
-      case 'togglenick': // 切换匿名
-        draft.sender.nick = !draft.sender.nick;
-        if (draft.sender.nick) {
+      case 'anonymous': // 切换匿名
+        draft.sender.anonymous = !draft.sender.anonymous;
+        if (draft.sender.anonymous) {
           draft.content.nickname = '匿名用户';
           draft.content.userid = 10000;
         } else {
@@ -196,7 +196,7 @@ export async function POST(request: NextRequest) {
         await draft.save();
         return NextResponse.json({
           code: 0,
-          message: `已切换 ${draft._id} 稿件为${draft.nick ? '匿名' : '非匿名'}，请考虑重新渲染稿件`
+          message: `已切换 ${draft._id} 稿件为${draft.sender.anonymous ? '匿名' : '非匿名'}，请考虑重新渲染稿件`
         }, { status: 200 });
       case 'sender': // 获取发帖人信息
         const sender = draft.sender;
