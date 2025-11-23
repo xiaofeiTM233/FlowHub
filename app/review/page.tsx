@@ -222,6 +222,10 @@ const ReviewListPage: React.FC = () => {
       key: 'option',
       width: 200,
       render: (_, record) => [
+        // 详情页面链接
+        <Link key="details" href={`/review/${record._id}`}>
+          详情
+        </Link>,
         // 预览操作
         <a 
           key="preview" 
@@ -229,35 +233,34 @@ const ReviewListPage: React.FC = () => {
         >
           预览
         </a>,
-        // 批准操作 - 带确认弹窗
-        <Popconfirm
-          key="approve"
-          title="确认批准这个帖子？"
-          onConfirm={() => handleReviewAction('approve', record._id)}
-          okText="确认"
-          cancelText="取消"
-        >
-          <a style={{ color: '#52c41a' }}>
-            批准
-          </a>
-        </Popconfirm>,
-        // 拒绝操作 - 带确认弹窗
-        <Popconfirm
-          key="reject"
-          title="确认拒绝这个帖子？"
-          onConfirm={() => handleReviewAction('reject', record._id)}
-          okText="确认"
-          cancelText="取消"
-        >
-          <a style={{ color: 'red' }}>
-            拒绝
-          </a>
-        </Popconfirm>,
-        
-        // 详情页面链接
-        <Link key="details" href={`/review/${record._id}`}>
-          详情
-        </Link>,
+        <>
+          {record.type === 'pending' && [
+            // 批准操作 - 带确认弹窗
+            <Popconfirm
+              key="approve"
+              title="确认批准这个帖子？"
+              onConfirm={() => handleReviewAction('approve', record._id)}
+              okText="确认"
+              cancelText="取消"
+            >
+              <a style={{ color: '#52c41a' }}>
+                批准
+              </a>
+            </Popconfirm>,
+            // 拒绝操作 - 带确认弹窗
+            <Popconfirm
+              key="reject"
+              title="确认拒绝这个帖子？"
+              onConfirm={() => handleReviewAction('reject', record._id)}
+              okText="确认"
+              cancelText="取消"
+            >
+              <a style={{ color: 'red' }}>
+                拒绝
+              </a>
+            </Popconfirm>,
+          ]}
+        </>,
       ],
     },
   ];
