@@ -282,6 +282,7 @@ export async function POST(request: NextRequest) {
       post.sender.anonymous = draft.sender.anonymous;
       post.sender.platform = draft.sender.platform;
       post.cid = draft._id;
+      post.content.text = `${option.description || 'FlowHub 稿件'} #${draft.num}`;
       for (const i of draft.images) {
         // 将审核图片添加到投稿图片中
         post.content.images.push(i);
