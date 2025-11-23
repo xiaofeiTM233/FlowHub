@@ -292,11 +292,11 @@ const ReviewListPage: React.FC = () => {
               params
             });
             
-            if (response.data.success) {
+            if (response.data.code === 0) {
               return {
-                data: response.data.data,
+                data: response.data.data.records,
+                total: response.data.data.total,
                 success: true,
-                total: response.data.total,
               };
             }
           } catch (error) {

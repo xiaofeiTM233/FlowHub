@@ -75,14 +75,17 @@ export async function GET(request: NextRequest) {
       delete i.content.list;
     }
     return NextResponse.json({
-      data: records,
-      total,
-      success: true,
+      code: 0,
+      message: '成功',
+      data: {
+        records,
+        total,
+      }
     });
   } catch (error) {
     console.error('[ReviewList] 获取审核列表失败:', error);
     return NextResponse.json({ 
-        success: false, 
+        code: -1, 
         message: '服务器内部错误' 
       },{ status: 500 }
     );
