@@ -6,8 +6,6 @@ const postSchema = new mongoose.Schema({
   timestamp: { type: Number, default: Date.now },
   cid: { type: String },
   sender: {
-    userid: { type: Number, default: 10000 },
-    nickname: { type: String, default: '昵称' },
     anonymous: { type: Boolean, default: false },
     platform: { type: [String], default: [] }
   },

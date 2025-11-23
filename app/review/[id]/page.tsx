@@ -7,7 +7,7 @@ import dynamic from 'next/dynamic';
 import { useParams, useRouter } from 'next/navigation';
 
 // 第三方库
-import { App, Button, Col, Descriptions, Flex, Image, Popconfirm, Radio, Row, Spin, Result, Input, InputNumber, Space, Timeline, Avatar, Tooltip } from 'antd';
+import { App, Button, Col, Descriptions, Flex, Image, Popconfirm, Radio, Row, Spin, Select, Result, Input, InputNumber, Space, Timeline, Avatar, Tooltip } from 'antd';
 import { SyncOutlined, UserSwitchOutlined, BlockOutlined, TagsOutlined, SendOutlined, SafetyOutlined, UserOutlined } from '@ant-design/icons';
 import { PageContainer, ProCard } from '@ant-design/pro-components';
 import axios from 'axios';
@@ -23,11 +23,6 @@ import itemRender from '@/components/itemRender';
 
 // 样式文件
 import 'viewerjs/dist/viewer.css';
-
-/**
- * 帖子数据类型定义
- */
-type PostItem = any;
 
 /**
  * 动态导入 JSON 编辑器组件
@@ -49,7 +44,7 @@ const PostDetailPage: React.FC = () => {
   const { message } = App.useApp();
 
   // 状态管理
-  const [post, setPost] = useState<PostItem | null>(null);
+  const [post, setPost] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeView, setActiveView] = useState('image');
@@ -61,6 +56,7 @@ const PostDetailPage: React.FC = () => {
   // 输入框和冷却状态管理
   const [commentValue, setCommentValue] = useState('');
   const [numValue, setNumValue] = useState('');
+  const [platformList, setPlatformList] = useState<string[]>([]);
   const [tagCooldown, setTagCooldown] = useState(0);
   const [repushCooldown, setRepushCooldown] = useState(0);
 
@@ -120,24 +116,30 @@ const PostDetailPage: React.FC = () => {
    * @param action 操作类型
    * @param value 可选的操作值（如评论内容、编号）
    */
-  const handleAction = async (action: string, value?: string | number) => {
+  const handleAction = async (action: string, value?: any) => {
     // 显示加载提示
     const key = `action-${action}-${Date.now()}`;
     message.loading({ content: '正在处理...', key });
+    let data = {
+      cid: id,
+      ...(action === 'num' ? { num: value } : {}),
+      ...(action === 'platform' ? { platform: value } : {}),
+    };
     // 特殊处理需要前端状态更新的操作
     if (action === 'comment') setCommentValue('');
     if (action === 'num') setNumValue('');
     if (action === 'tag') setTagCooldown(60);
     if (action === 'repush') setRepushCooldown(60);
+    if (action === 'platform') post.sender.platform = value;
     // 构造请求体
     const body: any = {
       action,
-      data: { cid: id },
+      data,
       auth: { mid: session.mid },
     };
     // 如果有额外的值，添加到请求体
     if (value) {
-      body.data.reason = value;
+      body.data.reason = `${value}`;
     }
     try {
       const response = await axios.post('/api/review', body);
@@ -334,7 +336,12 @@ const PostDetailPage: React.FC = () => {
         <Col xs={{ span: 24, order: 1 }} md={{ span: 16, order: 1 }}>
           <ProCard>
             <Flex justify="space-between" align="center" style={{ minHeight: 32 }}>
-              <strong>帖子ID: {post._id} （{post.timestamp}）</strong>
+              <span>
+                帖子ID: {post._id}
+                <span style={{ marginLeft: '8px', color: '#8c8c8c', fontSize: '12px', fontFamily: 'monospace' }}>
+                  ({post.timestamp})
+                </span>
+              </span>
               <span>
                 发布于: {dayjs(post.createdAt).format('YYYY-MM-DD HH:mm:ss')}
               </span>
@@ -384,6 +391,9 @@ const PostDetailPage: React.FC = () => {
                     approve={post.review.stat.approve} 
                     reject={post.review.stat.reject} 
                   />
+                </Descriptions.Item>
+                <Descriptions.Item label="发布账号">
+                  <Tags platform={post.sender.platform} />
                 </Descriptions.Item>
               </Descriptions>
             </ProCard>
@@ -444,6 +454,10 @@ const PostDetailPage: React.FC = () => {
                     <Space.Compact>
                       <InputNumber placeholder="编号" min={0} value={numValue} onChange={(value: any) => setNumValue(value)} onPressEnter={() => numValue && handleAction('num', numValue)} changeOnWheel/>
                       <Button type="primary" onClick={() => handleAction('num', numValue)} disabled={!numValue || numValue === ''}>提交</Button>
+                    </Space.Compact>
+                    <Space.Compact>
+                      <Select mode="tags" placeholder="aid" style={{ width: '100%' }} defaultValue={post.sender.platform} onChange={(value: string[]) => setPlatformList(value)} options={post.sender.platform.map((i: string) => ({ label: i, value: i }))}/>
+                      <Button type="primary" onClick={() => handleAction('platform', platformList)} disabled={!platformList || platformList.length === 0 || platformList === post.sender.platform}>提交</Button>
                     </Space.Compact>
                   </>
                 )}

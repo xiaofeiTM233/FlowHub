@@ -90,9 +90,10 @@ export async function POST(request: NextRequest) {
     
     let mid = user.mid;
     let action = body.action;
-    let reason = body.data.reason || '无理由';
+    let reason = `${action}：${body.data.reason || '无理由'}`;
     let cid = body.data.cid;
 
+    // 验证权限
     if (!action) {
       return NextResponse.json({
         code: -1,
@@ -140,7 +141,7 @@ export async function POST(request: NextRequest) {
     switch (action) {
       case 'retrial': // 重审
         draft.type = 'pending';
-        draft.review.comments.push({mid, reason: `重审：${reason}`});
+        draft.review.comments.push({mid, reason});
         result = `对帖子 ${cid} 执行：重审`;
         break;
       case 'approve': // 通过
@@ -153,17 +154,17 @@ export async function POST(request: NextRequest) {
         break;
       case 'approveforce': // 强制通过
         draft.type = 'approved';
-        draft.review.comments.push({mid, reason: `强制通过：${reason}`, timestmap: Date.now()});
+        draft.review.comments.push({mid, reason, timestmap: Date.now()});
         result = `对帖子 ${cid} 执行：强制通过`;
         break;
       case 'rejectforce': // 强制拒绝
         draft.type = 'rejected';
-        draft.review.comments.push({mid, reason: `强制拒绝：${reason}`, timestmap: Date.now()});
+        draft.review.comments.push({mid, reason, timestmap: Date.now()});
         result = `对帖子 ${cid} 执行：强制拒绝`;
         break;
       case 'block': // 拉黑
         draft.type = 'rejected';
-        draft.review.comments.push({mid, reason: `拉黑：${reason}`, timestmap: Date.now()});
+        draft.review.comments.push({mid, reason, timestmap: Date.now()});
         // 还没写拉黑逻辑
         result = `对帖子 ${cid} 执行：拉黑`;
         break;
@@ -190,6 +191,7 @@ export async function POST(request: NextRequest) {
         }
         option.last_number = num;
         draft.num = num;
+        draft.review.comments.push({mid, reason, timestmap: Date.now()});
         await draft.save();
         return NextResponse.json({
           code: 0,
@@ -205,6 +207,7 @@ export async function POST(request: NextRequest) {
           draft.content.nickname = draft.sender.nickname;
           draft.content.userid = draft.sender.userid;
         }
+        draft.review.comments.push({mid, reason, timestmap: Date.now()});
         await draft.save();
         return NextResponse.json({
           code: 0,
@@ -221,6 +224,7 @@ export async function POST(request: NextRequest) {
         if (process.env.REVIEW_TAG_URL) {
           const tags = await getTags(draft.content);
           draft.tags = tags.data;
+          draft.review.comments.push({mid, reason, timestmap: Date.now()});
           await draft.save();
           return NextResponse.json({
             code: 0,
@@ -241,6 +245,15 @@ export async function POST(request: NextRequest) {
           code: 0,
           message: `已重新推送投稿 ${draft._id}`,
           data: repush
+        }, { status: 200 });
+      case 'platform': // 修改推送平台
+        draft.sender.platform = body.data.platform;
+        draft.review.comments.push({mid, reason, timestmap: Date.now()});
+        await draft.save();
+        return NextResponse.json({
+          code: 0,
+          message: `已修改 ${draft._id} 的推送平台为 ${draft.sender.platform}`,
+          data: draft.sender.platform
         }, { status: 200 });
       default: // 默认返回错误
         return NextResponse.json({
@@ -263,9 +276,10 @@ export async function POST(request: NextRequest) {
     let results = draft.results || {};
     // 判断是否直接发布
     if (draft.type === 'approved') {
-      console.log(`[Review] 达成发帖条件，创建 ${draft._id} 为投稿`)
+      console.log(`[Review] 达成过审条件，创建 ${draft._id} 为投稿`)
       let post = new Post({ draft });
       post.type = 'pending';
+      post.sender.anonymous = draft.sender.anonymous;
       post.sender.platform = draft.sender.platform;
       post.cid = draft._id;
       for (const i of draft.images) {

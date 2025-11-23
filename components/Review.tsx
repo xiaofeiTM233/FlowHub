@@ -2,12 +2,6 @@
 import React from 'react';
 import { Space, Tag, Badge } from 'antd';
 
-interface TagsProps {
-  tags: {
-    [level: string]: string[];
-  };
-}
-
 interface StatProps {
   approve: number;
   reject: number;
@@ -17,7 +11,17 @@ interface ReviewStatusProps {
   status: 'pending' | 'approved' | 'rejected';
 }
 
-const Tags: React.FC<TagsProps> = ({ tags }) => {
+const Tags: React.FC<any> = ({ tags, platform = [] }) => {
+  if (platform.length > 0) {
+    // 如果传入平台列表，直接转换成标签
+    return (
+      (platform as string[]).map(tag => (
+        <Tag key={tag}>
+          {tag}
+        </Tag>
+      ))
+    );
+  }
   // 定义不同风险等级对应的颜色
   const colors: { [key: string]: string } = { 
     '通用': '', 
