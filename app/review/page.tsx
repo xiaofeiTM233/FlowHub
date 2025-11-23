@@ -130,6 +130,28 @@ const ReviewListPage: React.FC = () => {
    */
   const columns: ProColumns<PostItem>[] = [
     {
+      title: '帖子ID',
+      dataIndex: '_id',
+      search: false,
+      render: (_, record) => (
+        <>
+          <Link key="id" href={`/review/${record._id}`}>
+            {record._id}
+          </Link>
+          <span
+            style={{
+              marginLeft: '8px',
+              color: '#8c8c8c',
+              fontSize: '12px',
+              fontFamily: 'monospace',
+            }}
+          >
+            ({record.timestamp})
+          </span>
+        </>
+      ),
+    },
+    {
       title: '发布者',
       dataIndex: 'publisher',
       render: (_, record) => (
