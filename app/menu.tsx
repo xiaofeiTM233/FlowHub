@@ -1,11 +1,14 @@
 // app/menu.tsx
 import {
-  HomeOutlined,       // 首页
-  AuditOutlined,      // 审核管理
-  FileSearchOutlined, // 帖子审核
-  UserOutlined,       // 我的账号
-  DashboardOutlined,  // 仪表盘
-  LoginOutlined,      // 登录
+  HomeOutlined,         // 首页
+  MessageOutlined,      // 帖子管理
+  UnorderedListOutlined,// 帖子列表
+  TeamOutlined,         // 账号列表
+  AuditOutlined,        // 审核管理
+  FileSearchOutlined,   // 帖子审核
+  UserOutlined,         // 我的账号
+  DashboardOutlined,    // 仪表盘
+  LoginOutlined,        // 登录
 } from '@ant-design/icons';
 
 export const menuData = [
@@ -13,6 +16,23 @@ export const menuData = [
     path: '/',
     name: '首页',
     icon: <HomeOutlined />,
+  },
+  {
+    path: '/post',
+    name: '帖子管理',
+    icon: <MessageOutlined />,
+    routes: [
+      {
+        path: '/post/list',
+        name: '帖子列表',
+        icon: <UnorderedListOutlined />,
+      },
+      {
+        path: '/post/accounts',
+        name: '账号列表',
+        icon: <TeamOutlined />,
+      },
+    ],
   },
   {
     path: '/review',

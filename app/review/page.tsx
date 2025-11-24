@@ -15,14 +15,12 @@ import axios from 'axios';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import Viewer from 'react-viewer';
+import 'dayjs/locale/zh-cn';
+import 'viewerjs/dist/viewer.css';
 
 // 内部组件
 import { Stat, Tags } from '@/components/Review';
 import itemRender from '@/components/itemRender';
-
-// 样式文件
-import 'dayjs/locale/zh-cn';
-import 'viewerjs/dist/viewer.css';
 
 // dayjs 配置
 dayjs.extend(relativeTime);
