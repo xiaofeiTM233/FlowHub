@@ -11,23 +11,16 @@ import { App, Button, Col, Descriptions, Flex, Image, Popconfirm, Radio, Row, Sp
 import { SyncOutlined, UserSwitchOutlined, BlockOutlined, TagsOutlined, SendOutlined, SafetyOutlined, UserOutlined } from '@ant-design/icons';
 import { PageContainer, ProCard } from '@ant-design/pro-components';
 import axios from 'axios';
+import { useSession } from 'next-auth/react';
 import dayjs from 'dayjs';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import Viewer from 'react-viewer';
-import { useSession } from 'next-auth/react';
 
 // 内部组件
 import { ReviewStatus, Stat, Tags } from '@/components/Review';
 import itemRender from '@/components/itemRender';
 
-// 样式文件
-import 'viewerjs/dist/viewer.css';
-
-/**
- * 动态导入 JSON 编辑器组件
- * 使用动态导入避免 SSR 问题
- */
+// 动态导入 JSON 编辑器组件
 const JsonEditor = dynamic(() => import('@/components/JsonEditor'), {
   ssr: false,
   loading: () => <Spin />,
@@ -50,8 +43,9 @@ const PostDetailPage: React.FC = () => {
   const [activeView, setActiveView] = useState('image');
   
   // 图片查看器状态
-  const [viewerVisible, setViewerVisible] = useState(false);
-  const [viewerImages, setViewerImages] = useState<{ src: string }[]>([]);
+  const [previewVisible, setPreviewVisible] = useState(false);
+  const [previewImages, setPreviewImages] = useState<string[]>([]);
+  const [previewCurrent, setPreviewCurrent] = useState<number>(0);
 
   // 输入框和冷却状态管理
   const [commentValue, setCommentValue] = useState('');
@@ -169,11 +163,10 @@ const PostDetailPage: React.FC = () => {
    */
   const showViewer = (index = 0) => {
     if (!post?.images?.length) return;
-    
-    setViewerImages(
-      post.images.map((img: string) => ({ src: formatBase64(img) }))
-    );
-    setViewerVisible(true);
+    const srcList = post.images.map((img: string) => formatBase64(img));
+    setPreviewImages(srcList);
+    setPreviewCurrent(index);
+    setPreviewVisible(true);
   };
 
   // 加载状态处理
@@ -302,7 +295,11 @@ const PostDetailPage: React.FC = () => {
                 style={{ maxWidth: '100%' }}
                 src={formatBase64(post.images[0])}
                 preview={{
-                  visible: false, // 禁用 antd 自带的预览
+                  mask: (
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#fff' }}>
+                      预览
+                    </div>
+                  )
                 }}
                 onClick={() => showViewer(0)} // 点击图片打开自定义查看器
               />
@@ -479,7 +476,6 @@ const PostDetailPage: React.FC = () => {
                   width={80}
                   height={80}
                   src={formatBase64(img)}
-                  preview={{ visible: false }}
                   style={{ 
                     cursor: 'pointer', 
                     objectFit: 'cover',
@@ -496,10 +492,10 @@ const PostDetailPage: React.FC = () => {
           <ProCard title="审核评论">
             {post.review?.comments?.length > 0 ? (
               <Timeline 
-                mode="left"
+                mode="start"
                 items={post.review.comments.map((comment: any, index: number) => ({
                   key: index,
-                  label: (
+                  title: (
                     <Tooltip 
                       title={
                         <div
@@ -521,7 +517,7 @@ const PostDetailPage: React.FC = () => {
                       {comment.mid}
                     </Tooltip>
                   ),
-                  children: comment.reason
+                  content: comment.reason
                 }))}
               />
             ) : (
@@ -534,11 +530,17 @@ const PostDetailPage: React.FC = () => {
       </Row>
 
       {/* 图片查看器组件 */}
-      <Viewer
-        visible={viewerVisible}
-        onClose={() => setViewerVisible(false)}
-        images={viewerImages}
-      />
+      <Image.PreviewGroup
+        preview={{
+          open: previewVisible,
+          onOpenChange: (open) => setPreviewVisible(open),
+          current: previewCurrent,
+        }}
+      >
+        {previewImages.map((src, idx) => (
+          <Image key={idx} src={src} style={{ display: 'none' }} />
+        ))}
+      </Image.PreviewGroup>
     </PageContainer>
   );
 };
