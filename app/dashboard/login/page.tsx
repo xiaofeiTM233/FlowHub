@@ -29,13 +29,13 @@ export default function LoginPage() {
     });
 
     // 根据认证结果处理后续逻辑
-    if (result?.ok) {
+    if (!result?.error) {
       // 登录成功：显示成功消息并跳转到仪表板
-      message.success('登录成功！');
-      router.push('/dashboard/index');
+      message.success('登录成功！正在跳转…');
+      router.replace('/dashboard/index');
     } else {
       // 登录失败：显示错误消息
-      message.error(result?.error || '登录失败，请检查密码是否正确');
+      message.error('登录失败，请检查密码是否正确');
     }
   };
 
