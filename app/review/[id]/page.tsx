@@ -11,23 +11,16 @@ import { App, Button, Col, Descriptions, Flex, Image, Popconfirm, Radio, Row, Sp
 import { SyncOutlined, UserSwitchOutlined, BlockOutlined, TagsOutlined, SendOutlined, SafetyOutlined, UserOutlined } from '@ant-design/icons';
 import { PageContainer, ProCard } from '@ant-design/pro-components';
 import axios from 'axios';
+import { useSession } from 'next-auth/react';
 import dayjs from 'dayjs';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import Viewer from 'react-viewer';
-import { useSession } from 'next-auth/react';
 
 // 内部组件
 import { ReviewStatus, Stat, Tags } from '@/components/Review';
 import itemRender from '@/components/itemRender';
 
-// 样式文件
-import 'viewerjs/dist/viewer.css';
-
-/**
- * 动态导入 JSON 编辑器组件
- * 使用动态导入避免 SSR 问题
- */
+// 动态导入 JSON 编辑器组件
 const JsonEditor = dynamic(() => import('@/components/JsonEditor'), {
   ssr: false,
   loading: () => <Spin />,
@@ -49,10 +42,6 @@ const PostDetailPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [activeView, setActiveView] = useState('image');
   
-  // 图片查看器状态
-  const [viewerVisible, setViewerVisible] = useState(false);
-  const [viewerImages, setViewerImages] = useState<{ src: string }[]>([]);
-
   // 输入框和冷却状态管理
   const [commentValue, setCommentValue] = useState('');
   const [numValue, setNumValue] = useState('');
@@ -162,19 +151,6 @@ const PostDetailPage: React.FC = () => {
    * @returns 完整的 data URL
    */
   const formatBase64 = (base64: string) => `data:image/jpeg;base64,${base64}`;
-
-  /**
-   * 显示图片查看器
-   * @param index - 要显示的图片索引
-   */
-  const showViewer = (index = 0) => {
-    if (!post?.images?.length) return;
-    
-    setViewerImages(
-      post.images.map((img: string) => ({ src: formatBase64(img) }))
-    );
-    setViewerVisible(true);
-  };
 
   // 加载状态处理
   if (loading) {
@@ -301,10 +277,6 @@ const PostDetailPage: React.FC = () => {
                 width="auto"
                 style={{ maxWidth: '100%' }}
                 src={formatBase64(post.images[0])}
-                preview={{
-                  visible: false, // 禁用 antd 自带的预览
-                }}
-                onClick={() => showViewer(0)} // 点击图片打开自定义查看器
               />
             ) : (
               <div style={{ padding: 24 }}>无图片</div>
@@ -472,23 +444,23 @@ const PostDetailPage: React.FC = () => {
 
         <Col span={24} order={6}>
           <ProCard title="帖子图片列表">
-            <Flex gap="small" wrap="wrap">
-              {post.images.map((img: string, index: number) => (
-                <Image
-                  key={index}
-                  width={80}
-                  height={80}
-                  src={formatBase64(img)}
-                  preview={{ visible: false }}
-                  style={{ 
-                    cursor: 'pointer', 
-                    objectFit: 'cover',
-                    borderRadius: '4px'
-                  }}
-                  onClick={() => showViewer(index)}
-                />
-              ))}
+            <Image.PreviewGroup>
+              <Flex gap="small" wrap="wrap">
+                {post.images.map((img: string, index: number) => (
+                  <Image
+                    key={index}
+                    width={80}
+                    height={80}
+                    src={formatBase64(img)}
+                    style={{ 
+                      cursor: 'pointer', 
+                      objectFit: 'cover',
+                      borderRadius: '4px'
+                    }}
+                  />
+                ))}
               </Flex>
+            </Image.PreviewGroup>
           </ProCard>
         </Col>
 
@@ -496,10 +468,10 @@ const PostDetailPage: React.FC = () => {
           <ProCard title="审核评论">
             {post.review?.comments?.length > 0 ? (
               <Timeline 
-                mode="left"
+                mode="start"
                 items={post.review.comments.map((comment: any, index: number) => ({
                   key: index,
-                  label: (
+                  title: (
                     <Tooltip 
                       title={
                         <div
@@ -521,7 +493,7 @@ const PostDetailPage: React.FC = () => {
                       {comment.mid}
                     </Tooltip>
                   ),
-                  children: comment.reason
+                  content: comment.reason
                 }))}
               />
             ) : (
@@ -532,13 +504,6 @@ const PostDetailPage: React.FC = () => {
           </ProCard>
         </Col>
       </Row>
-
-      {/* 图片查看器组件 */}
-      <Viewer
-        visible={viewerVisible}
-        onClose={() => setViewerVisible(false)}
-        images={viewerImages}
-      />
     </PageContainer>
   );
 };

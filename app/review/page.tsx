@@ -7,16 +7,14 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 // 第三方库
-import { App, Popconfirm } from 'antd';
+import { App, Popconfirm, Image } from 'antd';
 import { ActionType, PageContainer, ProTable } from '@ant-design/pro-components';
 import type { ProColumns } from '@ant-design/pro-components';
 import { useSession } from 'next-auth/react';
 import axios from 'axios';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
-import Viewer from 'react-viewer';
 import 'dayjs/locale/zh-cn';
-import 'viewerjs/dist/viewer.css';
 
 // 内部组件
 import { Stat, Tags } from '@/components/Review';
@@ -41,8 +39,9 @@ const ReviewListPage: React.FC = () => {
   const actionRef = useRef<ActionType>(null);
   
   // 图片查看器状态管理
-  const [viewerVisible, setViewerVisible] = useState(false);
-  const [viewerImages, setViewerImages] = useState<{ src: string }[]>([]);
+  const [previewVisible, setPreviewVisible] = useState(false);
+  const [previewImages, setPreviewImages] = useState<string[]>([]);
+  const [previewCurrent, setPreviewCurrent] = useState<number>(0);
 
   // 获取消息提示 API
   const { message } = App.useApp();
@@ -71,18 +70,11 @@ const ReviewListPage: React.FC = () => {
       message.info('该帖子没有图片内容');
       return;
     }
-    // 转换图片数据格式为 Viewer 组件需要的格式
-    const viewerImageList = images.map((img: string) => {
-      const src = `data:image/png;base64,${img}`;
-      return {
-        src,
-        alt: '预览图'
-      };
-    });
-    
-    // 设置图片数据并显示查看器
-    setViewerImages(viewerImageList);
-    setViewerVisible(true);
+    // 转换为 antd Image 需要的 src 列表并打开预览
+    const srcList = images.map((img: string) => `data:image/png;base64,${img}`);
+    setPreviewImages(srcList);
+    setPreviewCurrent(0);
+    setPreviewVisible(true);
   };
 
   /**
@@ -231,8 +223,8 @@ const ReviewListPage: React.FC = () => {
         >
           预览
         </a>,
-        <>
-          {record.type === 'pending' && [
+        ...(record.type === 'pending'
+          ? [
             // 批准操作 - 带确认弹窗
             <Popconfirm
               key="approve"
@@ -257,8 +249,9 @@ const ReviewListPage: React.FC = () => {
                 拒绝
               </a>
             </Popconfirm>,
-          ]}
-        </>,
+            ]
+          : []
+        ),
       ],
     },
   ];
@@ -324,11 +317,17 @@ const ReviewListPage: React.FC = () => {
       />
       
       {/* 图片查看器组件 */}
-      <Viewer
-        visible={viewerVisible}
-        onClose={() => setViewerVisible(false)}
-        images={viewerImages}
-      />
+      <Image.PreviewGroup
+        preview={{
+          open: previewVisible,
+          onOpenChange: (open) => setPreviewVisible(open),
+          current: previewCurrent,
+        }}
+      >
+        {previewImages.map((src, idx) => (
+          <Image key={idx} src={src} style={{ display: 'none' }} />
+        ))}
+      </Image.PreviewGroup>
     </PageContainer>
   );
 };

@@ -1,6 +1,6 @@
 // components/Review.tsx
 import React from 'react';
-import { Space, Tag, Badge } from 'antd';
+import { Badge, Flex, Space, Tag } from 'antd';
 
 interface StatProps {
   approve: number;
@@ -16,7 +16,7 @@ const Tags: React.FC<any> = ({ tags, platform = [] }) => {
     // 如果传入平台列表，直接转换成标签
     return (
       (platform as string[]).map(tag => (
-        <Tag key={tag}>
+        <Tag key={tag} variant='outlined'>
           {tag}
         </Tag>
       ))
@@ -30,16 +30,16 @@ const Tags: React.FC<any> = ({ tags, platform = [] }) => {
     '低风险': 'magenta' 
   };
   return (
-    <Space wrap size={[0, 8]}>
+    <Flex gap="small" align="center" wrap>
       {Object.entries(tags).flatMap(([level, tagList]) => 
         // 遍历标签对象，按风险等级显示不同颜色的标签
         (tagList as string[]).map(tag => (
-          <Tag key={`${level}-${tag}`} color={colors[level] || 'default'}>
+          <Tag key={`${level}-${tag}`} color={colors[level] || 'default'} variant='outlined'>
             {tag}
           </Tag>
         ))
       )}
-    </Space>
+    </Flex>
   );
 };
 
