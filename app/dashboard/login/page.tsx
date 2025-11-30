@@ -32,7 +32,7 @@ export default function LoginPage() {
     if (!result?.error) {
       // 登录成功：显示成功消息并跳转到仪表板
       message.success('登录成功！正在跳转…');
-      router.replace('/dashboard/index');
+      window.location.href = '/dashboard/index';
     } else {
       // 登录失败：显示错误消息
       message.error('登录失败，请检查密码是否正确');
