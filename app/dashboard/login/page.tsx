@@ -1,7 +1,6 @@
 // app/login/page.tsx
 'use client';
 
-import { useRouter } from 'next/navigation';
 import { signIn } from 'next-auth/react';
 import { Button, Input, Card, Form, App } from 'antd';
 import { PageContainer } from '@ant-design/pro-components';
@@ -12,8 +11,6 @@ import itemRender from '@/components/itemRender';
  * @returns 登录页面 JSX 元素
  */
 export default function LoginPage() {
-  // 路由导航
-  const router = useRouter();
   // 消息提示
   const { message } = App.useApp();
 
@@ -29,13 +26,13 @@ export default function LoginPage() {
     });
 
     // 根据认证结果处理后续逻辑
-    if (result?.ok) {
+    if (!result?.error) {
       // 登录成功：显示成功消息并跳转到仪表板
       message.success('登录成功！');
-      router.push('/dashboard/index');
+      window.location.href = '/dashboard/index';
     } else {
       // 登录失败：显示错误消息
-      message.error(result?.error || '登录失败，请检查密码是否正确');
+      message.error('登录失败，请检查密码是否正确');
     }
   };
 

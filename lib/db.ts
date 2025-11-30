@@ -1,14 +1,5 @@
 // lib/db.ts
-import mongoose, { Mongoose } from 'mongoose';
-
-const MONGODB_URI = process.env.MONGODB_URI;
-
-if (!MONGODB_URI) {
-  console.error('❌ MONGODB_URI 环境变量未定义');
-  throw new Error(
-    '请在 .env 文件中定义 MONGODB_URI 环境变量'
-  );
-}
+import mongoose, { Mongoose, ConnectOptions } from 'mongoose';
 
 interface MongooseCache {
   conn: Mongoose | null;
@@ -17,6 +8,28 @@ interface MongooseCache {
 
 declare global {
   var mongoose: MongooseCache;
+}
+
+// 配置连接选项
+const opts: ConnectOptions = {};
+const MONGODB_URI = process.env.MONGODB_URI;
+if (!MONGODB_URI) {
+  console.error('❌ MONGODB_URI 环境变量未定义');
+  throw new Error(
+    '请在 .env 文件中定义 MONGODB_URI 环境变量'
+  );
+}
+
+try {
+  // 使用 URL 对象解析连接字符串
+  const uriObj = new URL(MONGODB_URI!);
+  // 如果 pathname 为空或只有 "/"，说明连接字符串里没写数据库名
+  if (!uriObj.pathname || uriObj.pathname === '/') {
+    opts.dbName = 'flowhub';
+    // console.log('ℹ️ URI 中未指定数据库，已自动设置');
+  }
+} catch (e) {
+  console.warn('⚠️ 无法解析 MONGODB_URI 路径');
 }
 
 // 将缓存初始化逻辑移到全局作用域
@@ -41,15 +54,8 @@ async function dbConnect(): Promise<Mongoose> {
 
   // 如果没有活动的连接 Promise，则创建一个新的
   if (!cached.promise) {
-    const opts = {
-      bufferCommands: true, 
-    };
-
     // console.log('✨ 创建新的数据库连接');
-    cached.promise = mongoose.connect(MONGODB_URI as string, opts).then((mongooseInstance) => {
-      // 连接成功后，返回实例
-      return mongooseInstance;
-    });
+    cached.promise = mongoose.connect(MONGODB_URI as string, opts).then((m) => m);
   }
 
   try {
