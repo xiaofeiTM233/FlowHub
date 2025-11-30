@@ -231,8 +231,8 @@ const ReviewListPage: React.FC = () => {
         >
           预览
         </a>,
-        <>
-          {record.type === 'pending' && [
+        ...(record.type === 'pending'
+          ? [
             // 批准操作 - 带确认弹窗
             <Popconfirm
               key="approve"
@@ -257,8 +257,9 @@ const ReviewListPage: React.FC = () => {
                 拒绝
               </a>
             </Popconfirm>,
-          ]}
-        </>,
+            ]
+          : []
+        ),
       ],
     },
   ];
