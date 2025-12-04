@@ -36,23 +36,27 @@ export async function GET(request: NextRequest) {
       }, { status: 400 });
     }
     // 2. 根据 cid (即 _id) 查找帖子
-    let draft = await Draft.findById(cid);
+    const draft = await Draft.findById(cid);
     if (!draft) {
       return NextResponse.json({
         code: -1,
         message: `未找到ID为 ${cid} 的帖子`
       }, { status: 404 });
     }
-    draft.nick = draft.sender.nick;
-    delete draft.sender;
-    draft.stat = draft.review.stat;
-    delete draft.review;
-    delete draft.content.list;
+    const review = {
+      _id: draft.pid,
+      type: draft.type,
+      timestamp: draft.timestamp,
+      anonymous: draft.sender.anonymous,
+      stat: draft.review.stat,
+      num: draft.num,
+      tags: draft.tags,
+    }
     // 3. 返回帖子内容
     return NextResponse.json({
       code: 0,
       message: "获取审核信息成功",
-      data: draft || {}
+      data: review || {}
     }, { status: 200 });
   } catch (error: any) {
     console.error('获取审核信息失败:', error);
