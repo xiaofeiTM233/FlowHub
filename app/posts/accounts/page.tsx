@@ -1,4 +1,4 @@
-// app/post/accounts/page.tsx
+// app/posts/accounts/page.tsx
 'use client';
 
 // React 相关
@@ -123,7 +123,7 @@ const AccountListPage: React.FC = () => {
         // 列表数据请求
         request={async params => {
           try {
-            const res = await axios.get('/api/account/list', { params });
+            const res = await axios.get('/api/accounts/list', { params });
             if (res.data && res.data.code === 0) {
               return {
                 data: res.data.data.records || res.data.data || [],

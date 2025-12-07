@@ -18,17 +18,17 @@ export const menuData = [
     icon: <HomeOutlined />,
   },
   {
-    path: '/post',
+    path: '/posts',
     name: '帖子管理',
     icon: <MessageOutlined />,
     routes: [
       {
-        path: '/post/list',
+        path: '/posts/list',
         name: '帖子列表',
         icon: <UnorderedListOutlined />,
       },
       {
-        path: '/post/accounts',
+        path: '/posts/accounts',
         name: '账号列表',
         icon: <TeamOutlined />,
       },

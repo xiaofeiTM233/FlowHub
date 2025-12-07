@@ -1,4 +1,4 @@
-// app/post/list/page.tsx
+// app/posts/list/page.tsx
 
 export const metadata = {
   title: '占位',

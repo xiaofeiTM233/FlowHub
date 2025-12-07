@@ -1,4 +1,4 @@
-// app/api/account/stats/route.ts
+// app/api/accounts/stats/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { biliStat } from '@/lib/adapter/bili';
 import { qzoneStat } from '@/lib/adapter/qzone';

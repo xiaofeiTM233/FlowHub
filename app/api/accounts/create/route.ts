@@ -1,4 +1,4 @@
-// app/api/account/create/route.ts
+// app/api/accounts/create/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { authApi } from "@/lib/auth";
 import dbConnect from '@/lib/db';
