@@ -35,39 +35,28 @@ type PostItem = any;
  * 提供帖子列表展示、审核操作、预览等功能
  */
 const ReviewListPage: React.FC = () => {
-  // 表格操作引用，用于刷新表格数据
+  // 初始化
   const actionRef = useRef<ActionType>(null);
-  
-  // 图片查看器状态管理
-  const [previewVisible, setPreviewVisible] = useState(false);
-  const [previewImages, setPreviewImages] = useState<string[]>([]);
-  const [previewCurrent, setPreviewCurrent] = useState<number>(0);
-
-  // 获取消息提示 API
   const { message } = App.useApp();
-
-  // 路由对象
   const router = useRouter();
-
-  // 获取用户会话信息
+  // 认证状态管理
   const { data: session, status } = useSession({
     required: true,
     onUnauthenticated() {
       message.warning('请先登录');
       router.push('/dashboard/login');
     },
-  }) as { data: any, status: string };
-
-  /**
-   * 处理帖子预览功能
-   * 打开图片查看器显示帖子图片
-   * @param record - 帖子记录数据
-   */
+  }) as { data: any; status: string };
+  // 图片查看器状态管理
+  const [previewVisible, setPreviewVisible] = useState(false);
+  const [previewImages, setPreviewImages] = useState<string[]>([]);
+  const [previewCurrent, setPreviewCurrent] = useState<number>(0);
+  // 处理图片预览功能
   const handlePreview = (record: PostItem) => {
     // 获取帖子中的图片数据
     const images = record.images || [];
     if (images.length === 0) {
-      message.info('该帖子没有图片内容');
+      message.info('该帖子没有图片');
       return;
     }
     // 转换为 antd Image 需要的 src 列表并打开预览
@@ -86,7 +75,6 @@ const ReviewListPage: React.FC = () => {
   const handleReviewAction = async (action: 'approve' | 'reject', postId: string) => {
     // 显示加载提示
     message.loading({ content: '正在处理...', key: 'reviewAction' });
-
     try {
       // 发送审核请求到后端 API
       const response = await axios.post('/api/review', {
@@ -94,7 +82,6 @@ const ReviewListPage: React.FC = () => {
         data: { cid: postId },
         auth: { mid: session?.user?.mid  },
       });
-
       if (response.data.success) {
         // 操作成功，显示成功消息并刷新表格数据
         message.success({ 
@@ -115,8 +102,7 @@ const ReviewListPage: React.FC = () => {
   };
 
   /**
-   * ProTable 表格列配置
-   * 定义审核列表的各个列及其渲染方式
+   * 表格列配置
    */
   const columns: ProColumns<PostItem>[] = [
     {
@@ -278,11 +264,8 @@ const ReviewListPage: React.FC = () => {
         cardBordered
         request={async (params) => {
           try {
-            // 请求审核列表数据
-            const response = await axios.get('/api/review/list', {
-              params
-            });
-            
+            // 请求列表数据
+            const response = await axios.get('/api/review/list', { params });
             if (response.data.code === 0) {
               return {
                 data: response.data.data.records,
@@ -293,7 +276,6 @@ const ReviewListPage: React.FC = () => {
           } catch (error) {
             console.error('[ReviewList] 请求列表数据失败:', error);
           }
-          
           // 请求失败时返回空数据
           return {
             data: [],

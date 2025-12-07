@@ -38,10 +38,17 @@ type AccountItem = {
  * 账号列表页面组件
  */
 const AccountListPage: React.FC = () => {
-  // 消息提示与路由
+  // 初始化
   const { message } = App.useApp();
   const router = useRouter();
-
+  // 认证状态管理
+  const { data: session, status } = useSession({
+    required: true,
+    onUnauthenticated() {
+      message.warning('请先登录');
+      router.push('/dashboard/login');
+    },
+  }) as { data: any; status: string };
   // 防止卸载后调用导致的样式/消息警告
   const mountedRef = useRef(true);
   useEffect(() => {
@@ -50,17 +57,9 @@ const AccountListPage: React.FC = () => {
     };
   }, []);
 
-  // 获取用户会话信息
-  const { data: session, status } = useSession({
-    required: true,
-    onUnauthenticated() {
-      if (!mountedRef.current) return;
-      message.warning('请先登录');
-      router.push('/dashboard/login');
-    },
-  }) as { data: any; status: string };
-
-  // 表格列定义
+  /**
+   * 表格列配置
+   */
   const columns: ProColumns<AccountItem>[] = [
     {
       title: '内部账号ID (aid)',
@@ -120,9 +119,11 @@ const AccountListPage: React.FC = () => {
         rowKey="aid"
         headerTitle="账号列表"
         columns={columns}
+        cardBordered
         // 列表数据请求
         request={async params => {
           try {
+            // 请求列表数据
             const res = await axios.get('/api/accounts/list', { params });
             if (res.data && res.data.code === 0) {
               return {
@@ -134,7 +135,7 @@ const AccountListPage: React.FC = () => {
           } catch (e) {
             console.error('[AccountList] 获取列表失败', e);
           }
-          // 出错时返回空数据以保证表格正常渲染
+          // 请求失败时返回空数据
           return {
             data: [],
             success: false,

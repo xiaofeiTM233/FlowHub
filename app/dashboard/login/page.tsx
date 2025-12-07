@@ -1,10 +1,12 @@
 // app/login/page.tsx
 'use client';
 
-import { signIn } from 'next-auth/react';
+import { signIn, useSession } from 'next-auth/react';
 import { Button, Input, Card, Form, App } from 'antd';
 import { PageContainer } from '@ant-design/pro-components';
 import itemRender from '@/components/itemRender';
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
 /**
  * 登录页面主组件
@@ -13,6 +15,15 @@ import itemRender from '@/components/itemRender';
 export default function LoginPage() {
   // 消息提示
   const { message } = App.useApp();
+  // 若已登录则重定向到仪表板
+  const { data: session, status } = useSession();
+  const router = useRouter();
+  useEffect(() => {
+    if (status === 'authenticated') {
+      message?.success('已登录，正在跳转...');
+      router.push('/dashboard/index');
+    }
+  }, [status, router, message]);
 
   /**
    * 表单提交处理函数
