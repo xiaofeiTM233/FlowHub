@@ -43,15 +43,9 @@ export async function GET(request: NextRequest) {
         message: `未找到ID为 ${cid} 的帖子`
       }, { status: 404 });
     }
-    const review = {
-      _id: draft.pid,
-      type: draft.type,
-      timestamp: draft.timestamp,
-      anonymous: draft.sender.anonymous,
-      stat: draft.review.stat,
-      num: draft.num,
-      tags: draft.tags,
-    }
+    let review = draft;
+    delete review.sender.userid;
+    delete review.sender.nickname;
     // 3. 返回帖子内容
     return NextResponse.json({
       code: 0,
@@ -282,8 +276,8 @@ export async function POST(request: NextRequest) {
     if (draft.type === 'approved') {
       console.log(`[Review] 达成过审条件，创建 ${draft._id} 为投稿`)
       let post = new Post({ draft });
-      post.type = 'pending';
-      post.sender.anonymous = draft.sender.anonymous;
+      post.type = 'draft';
+      post.sender.source = 'review';
       post.sender.platform = draft.sender.platform;
       post.cid = draft._id;
       post.content.text = `${option.description || 'FlowHub 稿件'} #${draft.num}`;
