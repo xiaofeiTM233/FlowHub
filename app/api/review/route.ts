@@ -78,14 +78,14 @@ export async function POST(request: NextRequest) {
         message: 'Unauthorized'
       }, { status: 401 });
     }
-    
+
     // 获取配置选项
     let option = await Option.findById('000000000000000000000000');
     if (!option) {
       // 如果不存在默认配置，创建一个
       option = new Option({ _id: '000000000000000000000000' });
     }
-    
+
     let mid = user.mid;
     let action = body.action;
     let reason = `${action}：${body.data.reason || '无理由'}`;
@@ -97,7 +97,7 @@ export async function POST(request: NextRequest) {
         code: -1,
         message: `不支持的操作`
       }, { status: 400 });
-    } else if (!['approve', 'reject', 'comment', 'raw'].includes(action) && !(user?.role === 'admin' || user?.role === 'sysop')) {
+    } else if (!['approve', 'reject', 'comment', 'raw'].includes(action) && !['admin', 'sysop'].includes(user.role)) {
       return NextResponse.json({
         code: -4,
         message: 'Unauthorized'

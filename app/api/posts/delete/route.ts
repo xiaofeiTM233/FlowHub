@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
   await dbConnect();
   // 鉴权
   const user = await authApi(request);
-  if (!user) {
+  if (!user || !['admin', 'sysop'].includes(user.role)) {
     return NextResponse.json({
       code: -4,
       message: 'Unauthorized'
