@@ -6,10 +6,11 @@ const postSchema = new mongoose.Schema({
   timestamp: { type: Number, default: Date.now },
   cid: { type: String },
   sender: {
-    anonymous: { type: Boolean, default: false },
+    source: { type: String, default: null },
     platform: { type: [String], default: [] }
   },
   content: {
+    title: { type: String, default: '' },
     text: { type: String, default: '' },
     images: { type: [String], default: [] }
   },
