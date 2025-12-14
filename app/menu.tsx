@@ -1,12 +1,16 @@
 // app/menu.tsx
 import {
   HomeOutlined,         // 首页
-  MessageOutlined,      // 帖子管理
-  UnorderedListOutlined,// 帖子列表
-  TeamOutlined,         // 账号列表
+  FolderOpenOutlined,   // 帖子管理
+  ProfileOutlined,      // 账号列表
+  InboxOutlined,        // 帖子列表
+  SignatureOutlined,    // 新建帖子
   AuditOutlined,        // 审核管理
   FileSearchOutlined,   // 帖子审核
-  UserOutlined,         // 我的账号
+  ControlOutlined,      // 系统管理
+  TeamOutlined,         // 审核员
+  SettingOutlined,      // 系统设置
+  IdcardOutlined,       // 我的账号
   DashboardOutlined,    // 仪表盘
   LoginOutlined,        // 登录
 } from '@ant-design/icons';
@@ -19,18 +23,23 @@ export const menuData = [
   },
   {
     path: '/posts',
-    name: '帖子管理',
-    icon: <MessageOutlined />,
+    name: '发帖管理',
+    icon: <FolderOpenOutlined />,
     routes: [
-      {
-        path: '/posts/list',
-        name: '帖子列表',
-        icon: <UnorderedListOutlined />,
-      },
       {
         path: '/posts/accounts',
         name: '账号列表',
-        icon: <TeamOutlined />,
+        icon: <ProfileOutlined />,
+      },
+      {
+        path: '/posts/list',
+        name: '帖子列表',
+        icon: <InboxOutlined />,
+      },
+      {
+        path: '/posts/new',
+        name: '新建帖子',
+        icon: <SignatureOutlined />,
       },
     ],
   },
@@ -47,9 +56,26 @@ export const menuData = [
     ],
   },
   {
+    path: '/settings',
+    name: '系统管理',
+    icon: <ControlOutlined />,
+    routes: [
+      {
+        path: '/settings/moderators',
+        name: '审核员',
+        icon: <TeamOutlined />,
+      },
+      {
+        path: '/settings/options',
+        name: '系统设置',
+        icon: <SettingOutlined />,
+      },
+    ],
+  },
+  {
     path: '/dashboard',
     name: '我的账号',
-    icon: <UserOutlined />,
+    icon: <IdcardOutlined />,
     routes: [
       {
         path: '/dashboard/index',
