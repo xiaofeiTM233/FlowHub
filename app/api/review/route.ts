@@ -263,7 +263,7 @@ export async function POST(request: NextRequest) {
     draft.review.stat.approve = draft.review.approve.length || 0;
     draft.review.stat.reject = draft.review.reject.length || 0;
     if ((option.approve_num && option.approve_num > 0 && draft.review.stat.approve >= option.approve_num) ||
-      (option.total_num && option.total_num > 0 && (draft.review.stat.approve - draft.review.stat.reject) >= option.total_num)) {
+    (option.total_num && option.total_num > 0 && (draft.review.stat.approve - draft.review.stat.reject) >= option.total_num)) {
       draft.type = 'approved';
     }
     if ((option.reject_num && option.reject_num > 0 && draft.review.stat.reject >= option.reject_num) ||

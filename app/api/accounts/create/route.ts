@@ -35,6 +35,6 @@ export async function POST(request: NextRequest) {
   return NextResponse.json({
     code: 0,
     message: '平台账号已更新',
-    account: theAccount
+    data: theAccount
   }, { status: 200 });
 }

@@ -5,9 +5,9 @@ import dbConnect from '@/lib/db';
 import Post from '@/models/posts';
 
 /**
- * 获取帖子的信息
+ * 获取帖子信息
  * @param request 请求应包含查询参数 id
- * @returns 帖子的基本信息
+ * @returns 帖子的信息
  */
 export async function GET(request: NextRequest) {
   try {
@@ -91,6 +91,6 @@ export async function POST(request: NextRequest) {
   return NextResponse.json({
     code: 0,
     message: '帖子已更新',
-    post: thePost
+    data: thePost
   }, { status: 200 });
 }
