@@ -8,7 +8,7 @@ import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 
 // 第三方库
-import { App, Image, Card, Segmented } from 'antd';
+import { App, Image, Card, Segmented, Popconfirm } from 'antd';
 import { ActionType, PageContainer, ProTable, ProColumns } from '@ant-design/pro-components';
 import { BarsOutlined, AppstoreOutlined } from '@ant-design/icons';
 import axios from 'axios';
@@ -55,8 +55,52 @@ const PostListPage: React.FC = () => {
     setPreviewCurrent(0);
     setPreviewVisible(true);
   };
+
+  // 处理发布功能
+  const handlePublish = async (record: PostItem) => {
+    try {
+      setPublishing(record._id);
+      const response = await axios.post('/api/posts/publish', { _id: record._id });
+      if (response.data?.code === 0) {
+        message.success('发布成功');
+        // 刷新列表数据
+        actionRef.current?.reload();
+      } else {
+        message.error(response.data?.message || '发布失败');
+      }
+    } catch (error: any) {
+      console.error('[PostList] 发布失败:', error);
+      message.error(error.response?.data?.message || '发布失败，请重试');
+    } finally {
+      setPublishing(null);
+    }
+  };
+
+  // 处理删帖功能
+  const handleDelete = async (record: PostItem) => {
+    try {
+      setDeleting(record._id);
+      const response = await axios.post('/api/posts/delete', { _id: record._id });
+      if (response.data?.code === 0) {
+        message.success('删帖成功');
+        // 刷新列表数据
+        actionRef.current?.reload();
+      } else {
+        message.error(response.data?.message || '删帖失败');
+      }
+    } catch (error: any) {
+      console.error('[PostList] 删帖失败:', error);
+      message.error(error.response?.data?.message || '删帖失败，请重试');
+    } finally {
+      setDeleting(null);
+    }
+  };
   // 视图模式状态：表格或瀑布流
   const [viewMode, setViewMode] = useState<'table' | 'waterfall'>('table');
+  // 发布状态管理
+  const [publishing, setPublishing] = useState<string | null>(null);
+  // 删帖状态管理
+  const [deleting, setDeleting] = useState<string | null>(null);
 
   /**
    * 表格列配置
@@ -91,6 +135,7 @@ const PostListPage: React.FC = () => {
       valueEnum: {
         draft: { text: '草稿', status: 'Processing' },
         published: { text: '已发布', status: 'Success' },
+        deleted: { text: '已删帖', status: 'Success' },
       },
     },
     {
@@ -122,10 +167,78 @@ const PostListPage: React.FC = () => {
       title: '操作',
       valueType: 'option',
       key: 'option',
-      render: (_, record) => [
-        <Link key="detail" href={`/posts/${record._id}`}>详情</Link>,
-        <a key="preview" onClick={() => handlePreview(record)}>预览</a>,
-      ],
+      render: (_, record) => {
+        const actions = [
+          <Link key="detail" href={`/posts/${record._id}`}>详情</Link>,
+          <a key="preview" onClick={() => handlePreview(record)}>预览</a>,
+        ];
+        
+        // 如果是草稿状态，添加发布链接
+        if (record.type === 'draft') {
+          if (publishing === record._id) {
+            actions.push(
+              <a 
+                key="publish" 
+                style={{ 
+                  color: 'rgb(82, 196, 26)',
+                  cursor: 'not-allowed',
+                  opacity: 0.6
+                }}
+              >
+                发布中...
+              </a>
+            );
+          } else {
+            actions.push(
+              <Popconfirm
+                key="publish"
+                title="确认发布这个帖子？"
+                onConfirm={() => handlePublish(record)}
+                okText="确认"
+                cancelText="取消"
+              >
+                <a style={{ color: 'rgb(82, 196, 26)' }}>
+                  发布
+                </a>
+              </Popconfirm>
+            );
+          }
+        }
+        
+        // 如果是已发布状态，添加删帖按钮
+        if (record.type === 'published') {
+          if (deleting === record._id) {
+            actions.push(
+              <a 
+                key="delete" 
+                style={{ 
+                  color: 'red',
+                  cursor: 'not-allowed',
+                  opacity: 0.6
+                }}
+              >
+                删除中...
+              </a>
+            );
+          } else {
+            actions.push(
+              <Popconfirm
+                key="delete"
+                title="确认删除这个帖子？"
+                onConfirm={() => handleDelete(record)}
+                okText="确认"
+                cancelText="取消"
+              >
+                <a style={{ color: 'red' }}>
+                  删帖
+                </a>
+              </Popconfirm>
+            );
+          }
+        }
+        
+        return actions;
+      },
     },
   ];
 
@@ -138,9 +251,8 @@ const PostListPage: React.FC = () => {
           <div
             style={{
               height: 200,
-              backgroundImage: `url(data:image/png;base64,${record.images[0]})`,
+              backgroundImage: `url(${record.images[0]})`,
               backgroundSize: 'cover',
-              backgroundPosition: 'center',
             }}
             onClick={() => handlePreview(record)}
           />
@@ -160,8 +272,60 @@ const PostListPage: React.FC = () => {
         )
       }
       actions={[
-        <Link key="detail" href={`/posts/${record._id}`}>详情</Link>,
-        <a key="preview" onClick={() => handlePreview(record)}>预览</a>,
+        <Link key="detail" href={`/posts/${record._id}`} style={{ color: '#1890ff' }}>详情</Link>,
+        <a key="preview" onClick={() => handlePreview(record)} style={{ color: '#1890ff' }}>预览</a>,
+        ...(record.type === 'draft' ? 
+          (publishing === record._id ? [
+            <a 
+              key="publish"
+              style={{ 
+                color: 'rgb(82, 196, 26)',
+                cursor: 'not-allowed',
+                opacity: 0.6
+              }}
+            >
+              发布中...
+            </a>
+          ] : [
+            <Popconfirm
+              key="publish"
+              title="确认发布这个帖子？"
+              onConfirm={() => handlePublish(record)}
+              okText="确认"
+              cancelText="取消"
+            >
+              <a style={{ color: 'rgb(82, 196, 26)' }}>
+                发布
+              </a>
+            </Popconfirm>
+          ]) : []
+        ),
+        ...(record.type === 'published' ? 
+          (deleting === record._id ? [
+            <a 
+              key="delete"
+              style={{ 
+                color: 'red',
+                cursor: 'not-allowed',
+                opacity: 0.6
+              }}
+            >
+              删除中...
+            </a>
+          ] : [
+            <Popconfirm
+              key="delete"
+              title="确认删除这个帖子？"
+              onConfirm={() => handleDelete(record)}
+              okText="确认"
+              cancelText="取消"
+            >
+              <a style={{ color: 'red' }}>
+                删帖
+              </a>
+            </Popconfirm>
+          ]) : []
+        )
       ]}
     >
       <Card.Meta
@@ -176,10 +340,10 @@ const PostListPage: React.FC = () => {
         description={
           <div>
             <div style={{ fontSize: '12px', color: '#999', marginBottom: 8 }}>
-              ID: {record._id} ({record.timestamp})
+              ID: {record._id} ({record.timestamp}) {record.images?.length ? `${record.images.length} 张图片` : '无图片'}
             </div>
             <div style={{ fontSize: '12px', color: '#999' }}>
-              {record.images?.length ? `${record.images.length} 张图片` : '无图片'}
+              内容：{record.text ? (record.text.length > 30 ? `${record.text.slice(0, 30)}...` : record.text) : '无内容'}
             </div>
           </div>
         }
