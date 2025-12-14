@@ -150,7 +150,7 @@ export async function qzoneUpload(account: any, base64: string): Promise<any> {
  * @param ugc_right '1'为所有人可见, '64'为仅自己可见, '128'为部分好友不可见
  * @returns 请求状态码或错误信息
  */
-export async function qzonePublish(account: any, pics: any[], con: string, ugc_right: string = '128'): Promise<number | { error: any }> {
+export async function qzonePublish(account: any, pics: any[], con: string, ugc_right: string = '128'): Promise<any> {
   console.log('[Adapter][qzone][qzonePublish]', `发布空间说说-${account.aid}-${ugc_right}`);
   try {
     // 账号基本信息
@@ -158,18 +158,25 @@ export async function qzonePublish(account: any, pics: any[], con: string, ugc_r
     const g_tk = account.cookies.g_tk;
     const cookies = Object.entries(account.cookies).map(([key, value]) => `${key}=${value}`).join('; ');
 
-    // richval多图用\t分割 不记得为什么之前type写死为3了
-    const richval = pics.map(i => `${uid},${i.albumid},${i.lloc},${i.sloc},${i.type},${i.width},${i.height},,${i.width},${i.height}`).join('\t');
-    // pic_bo每张图的bo用,分割
-    const bo = pics.map(i => new URLSearchParams(new URL(i.pre).search).get('bo') || '');
-    const pic_bo = `${bo.join(',')}  ${bo.join(',')}`;
+    let richtype = '';
+    let richval = '';
+    let pic_bo = '';
+    if (pics.length > 0) {
+      // richval多图用\t分割 不记得为什么之前type写死为3了
+      richval = pics.map(i => `${uid},${i.albumid},${i.lloc},${i.sloc},${i.type},${i.width},${i.height},,${i.width},${i.height}`).join('\t');
+      // pic_bo每张图的bo用,分割
+      const bo = pics.map(i => new URLSearchParams(new URL(i.pre).search).get('bo') || '');
+      pic_bo = `${bo.join(',')}  ${bo.join(',')}`;
+      // richtype
+      richtype = '1'
+    }
 
     // 发起请求
     const body = new URLSearchParams({
       syn_tweet_verson: '1',
       paramstr: '1',
       pic_template: '', // 不设置图片模板好像更好
-      richtype: '1',
+      richtype,
       richval,
       special_url: '',
       subrichtype: '1',
@@ -269,6 +276,9 @@ export async function qzonePlus(account: any, content: { text: string, images: s
       }
     }
     const data = await qzonePublish(account, pics, content.text);
+    if (data.code !== 0) {
+      return { platform: 'qzone', status: 'error', message: data };
+    }
     return { platform: 'qzone', status: 'success', data };
   } catch (error: any) {
     return { platform: 'qzone', status: 'error', message: error.message };
