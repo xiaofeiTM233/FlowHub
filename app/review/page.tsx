@@ -82,9 +82,9 @@ const ReviewListPage: React.FC = () => {
         data: { cid: postId },
         auth: { mid: session?.user?.mid  },
       });
-      if (response.data.success) {
+      if (response.data.code === 0) {
         // 操作成功，显示成功消息并刷新表格数据
-        message.success({ 
+        message.success({
           content: response.data.message, 
           key: 'reviewAction' 
         });

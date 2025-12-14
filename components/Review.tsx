@@ -15,11 +15,13 @@ const Tags: React.FC<any> = ({ tags, platform = [] }) => {
   if (platform.length > 0) {
     // 如果传入平台列表，直接转换成标签
     return (
-      (platform as string[]).map(tag => (
-        <Tag key={tag} variant='outlined'>
-          {tag}
-        </Tag>
-      ))
+      <Flex gap="small" align="center" wrap>
+        {(platform as string[]).map(tag => (
+          <Tag key={tag} variant='outlined'>
+            {tag}
+          </Tag>
+        ))}
+      </Flex>
     );
   }
   // 定义不同风险等级对应的颜色
