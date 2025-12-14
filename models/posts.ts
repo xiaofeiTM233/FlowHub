@@ -6,7 +6,7 @@ const postSchema = new mongoose.Schema({
   timestamp: { type: Number, default: Date.now },
   cid: { type: String },
   sender: {
-    source: { type: String, default: null },
+    source: { type: String, default: 'manual' },
     platform: { type: [String], default: [] }
   },
   content: {

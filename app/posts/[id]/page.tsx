@@ -159,7 +159,7 @@ const PostEditPage: React.FC = () => {
           }
         }
       };
-      delete submitData.data._id;
+      if (id !== 'new') delete submitData.data._id;
       delete submitData.data.timestamp;
       delete submitData.data.results;
       const response = await axios.post(`/api/posts`, submitData);
@@ -255,20 +255,27 @@ const PostEditPage: React.FC = () => {
               options={[
                 { label: '草稿', value: 'draft' },
                 { label: '已发布', value: 'published' },
+                { label: '已删帖', value: 'deleted' },
               ]}
               rules={[{ required: true, message: '请选择帖子状态' }]}
             />
             <ProFormSelect
-              name={['sender', 'platform']}
-              label="平台"
-              mode="tags"
-              options={post.sender.platform.map((i: string) => ({ label: i, value: i }))}
-              placeholder="请选择发布平台"
-            />
-            <ProFormText
               name={['sender', 'source']}
               label="来源"
               placeholder="请输入内容来源"
+              disabled
+              options={[
+                { label: '审核', value: 'review' },
+                { label: '人工', value: 'manual' },
+              ]}
+              rules={[{ required: true, message: '请选择内容来源' }]}
+            />
+            <ProFormSelect
+              name={['sender', 'platform']}
+              label="发布平台"
+              mode="tags"
+              options={post.sender.platform.map((i: string) => ({ label: i, value: i }))}
+              placeholder="请选择发布平台"
             />
             <ProFormText
               name={['content', 'title']}

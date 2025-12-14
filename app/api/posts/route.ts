@@ -79,12 +79,16 @@ export async function POST(request: NextRequest) {
   }
   // 解析请求参数
   const { data } = await request.json();
+  if (data.pid === 'new') {
+    data.pid = data._id;
+  } 
   // 查找并更新帖子
   const thePost = await Post.findOneAndUpdate(
     { _id: data.pid },
     { $set: data },
     {
-      new: true
+      new: true,
+      upsert: true
     }
   );
   // 返回操作结果
