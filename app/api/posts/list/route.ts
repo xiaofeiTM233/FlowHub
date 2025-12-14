@@ -73,6 +73,7 @@ export async function GET(request: NextRequest) {
       .lean();
     for (const i of records) {
       i.anonymous = i.sender?.anonymous || false;
+      i.title = i.content?.title || '';
       i.text = i.content?.text || '';
       i.images = i.content?.images || [];
       delete i.sender;
