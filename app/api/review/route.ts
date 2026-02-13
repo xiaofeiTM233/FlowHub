@@ -220,8 +220,8 @@ export async function POST(request: NextRequest) {
         }, { status: 200 });
       case 'tag': // 获取标签
         if (process.env.REVIEW_TAG_URL) {
-          const tags = await getTags(draft.content);
-          draft.tags = tags.data;
+          const tags = await getTags(draft.images[0]);
+          draft.tags = tags;
           draft.review.comments.push({mid, reason, timestmap: Date.now()});
           await draft.save();
           return NextResponse.json({

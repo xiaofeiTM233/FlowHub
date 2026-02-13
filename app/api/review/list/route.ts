@@ -40,6 +40,8 @@ export async function GET(request: NextRequest) {
     // 审核状态筛选
     if (type) {
       filter.type = type;
+    } else {
+      filter.type = { $in: ['pending', 'approved', 'rejected'] };
     }
     // 匿名状态筛选
     if (isAnonymous) {
