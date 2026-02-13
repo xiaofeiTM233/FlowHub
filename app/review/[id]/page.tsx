@@ -124,7 +124,7 @@ const PostDetailPage: React.FC = () => {
     const body: any = {
       action,
       data,
-      auth: { mid: session.mid },
+      auth: { mid: session?.user?.mid },
     };
     // 如果有额外的值，添加到请求体
     if (value) {
