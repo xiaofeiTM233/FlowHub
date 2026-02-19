@@ -6,10 +6,13 @@ import mongoose from 'mongoose';
 import { authApi } from '@/lib/auth';
 
 /**
- * 账号数据类型
+ * 平台账号数据类型
  */
 type AccountType = any;
 
+/*
+ * 查询平台账号列表
+ */
 export async function GET(request: NextRequest) {
   // 鉴权
   const user = await authApi(request);

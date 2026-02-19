@@ -48,7 +48,7 @@ const OptionsEditPage: React.FC = () => {
   useEffect(() => {
     const fetchOptions = async () => {
       try {
-        const response = await axios.get('/api/options');
+        const response = await axios.get('/api/settings/options');
         if (response.data.code === 0) {
           const optionsData = response.data.data;
           setOptions(optionsData);
@@ -78,8 +78,7 @@ const OptionsEditPage: React.FC = () => {
           ...values
         }
       };
-      
-      const response = await axios.post('/api/options', submitData);
+      const response = await axios.post('/api/settings/options', submitData);
       if (response.data.code === 0) {
         message.success('设置保存成功');
         setOptions({ ...options, ...values });
@@ -102,10 +101,10 @@ const OptionsEditPage: React.FC = () => {
         breadcrumb: {
           items: [
             {
-              path: '/dashboard/index',
-              title: '仪表盘',
+              title: '系统管理'
             },
             {
+              path: '/settings/options',
               title: '系统设置',
             },
           ],
@@ -122,10 +121,10 @@ const OptionsEditPage: React.FC = () => {
         breadcrumb: {
           items: [
             {
-              path: '/dashboard/index',
-              title: '仪表盘',
+              title: '系统管理'
             },
             {
+              path: '/settings/options',
               title: '系统设置',
             },
           ],

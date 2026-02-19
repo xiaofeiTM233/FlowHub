@@ -1,4 +1,4 @@
-// app/api/options/route.ts
+// app/api/settings/options/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { authApi } from "@/lib/auth";
 import dbConnect from '@/lib/db';

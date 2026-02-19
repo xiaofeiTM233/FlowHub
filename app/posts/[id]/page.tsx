@@ -35,7 +35,7 @@ const PostEditPage: React.FC = () => {
 
   // 路由对象
   const router = useRouter();
-  
+
   const [form] = Form.useForm();
 
   // 获取用户会话信息
@@ -177,7 +177,24 @@ const PostEditPage: React.FC = () => {
 
   // 加载状态处理
   if (loading) {
-    return <PageContainer loading />;
+    return <PageContainer
+      loading
+      header={{
+        title: '',
+        breadcrumb: {
+          items: [
+            {
+              path: '/posts/list',
+              title: '帖子列表',
+            },
+            {
+              title: id,
+            },
+          ],
+          itemRender
+        }
+      }}
+    />;
   }
 
   return (
