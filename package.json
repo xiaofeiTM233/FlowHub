@@ -10,6 +10,7 @@
   "dependencies": {
     "@ant-design/cssinjs": "^2.1.2",
     "@ant-design/pro-components": "^3.1.12-0",
+    "@sparticuz/chromium-min": "^149.0.0",
     "antd": "^6.4.3",
     "axios": "^1.17.0",
     "dayjs": "^1.11.21",

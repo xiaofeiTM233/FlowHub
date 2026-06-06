@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
     }
     // 3. 读取 HTML 模板
     const template = await readFile(
-      path.join(process.cwd(), 'models', 'template.html'), 
+      path.join(process.cwd(), 'models', 'template.html'),
       'utf-8'
     );
     // 4. 调用渲染函数
@@ -103,7 +103,7 @@ export async function POST(request: NextRequest) {
         draft.content = body.content;
       }
     } else {
-      draft = new Draft( body );
+      draft = new Draft(body);
     }
     if (!draft.timestamp || draft.timestamp <= 0) {
       draft.timestamp = Date.now();
@@ -117,14 +117,14 @@ export async function POST(request: NextRequest) {
     console.log('[Render] 接收到渲染请求:', outputType);
     // 3. 读取 HTML 模板
     const template = await readFile(
-      path.join(process.cwd(), 'models', 'template.html'), 
+      path.join(process.cwd(), 'models', 'template.html'),
       'utf-8'
     );
     // 4. 调用渲染函数
     let image: any;
     let data = draft.content;
     data.time = new Date(draft.timestamp + (8 * 60 * 60 * 1000)).toISOString().slice(0, 19).replace('T', ' ');
-    if (process.env.RENDER_TYPE === '1' && process.env.REMOTE_CHROME_URL) {
+    if (process.env.RENDER_TYPE === '0' || (process.env.RENDER_TYPE === '1' && process.env.REMOTE_CHROME_URL)) {
       // 调用本地渲染函数
       image = await render(template, data, outputType);
     } else if (process.env.RENDER_TYPE === '2' && process.env.RENDER_URL) {
