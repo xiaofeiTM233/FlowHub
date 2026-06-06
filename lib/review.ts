@@ -161,7 +161,7 @@ export async function pushReview(account: any, draft: any, image: any, option: a
  */
 export async function getTags(data: any): Promise<any> {
   let tdata = {
-    "model": "glm-4.6v-flash",
+    "model": process.env.REVIEW_TAG_MODEL || "glm-4.6v-flash",
     "messages": [
       {
         "role": "system",
@@ -212,7 +212,10 @@ export async function getTags(data: any): Promise<any> {
   // 调用AI标签审核接口
   const tres = await axios.post(process.env.REVIEW_TAG_URL as string, tdata, {
     timeout: 60000,
-    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${process.env.REVIEW_TAG_KEY}` }
+    headers: {
+      'Content-Type': 'application/json',
+      ...(process.env.REVIEW_TAG_KEY && { 'Authorization': `Bearer ${process.env.REVIEW_TAG_KEY}` })
+    }
   });
   return JSON.parse(tres.data.choices[0].message.tool_calls[0].function.arguments);
 }
