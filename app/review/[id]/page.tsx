@@ -146,11 +146,11 @@ const PostDetailPage: React.FC = () => {
   };
 
   /**
-   * 格式化 Base64 图片数据
-   * @param base64 - Base64 编码的图片数据
-   * @returns 完整的 data URL
+   * 格式化图片 src
+   * 附件 ID → /api/storage/ URL；base64 直存 → data URI
    */
-  const formatBase64 = (base64: string) => `data:image/jpeg;base64,${base64}`;
+  const imgSrc = (img: string) =>
+    img?.length > 200 ? `data:image/jpeg;base64,${img}` : `/api/storage/${img}`;
 
   // 加载状态处理
   if (loading) {
@@ -276,7 +276,7 @@ const PostDetailPage: React.FC = () => {
               <Image
                 width="auto"
                 style={{ maxWidth: '100%' }}
-                src={formatBase64(post.images[0])}
+                src={imgSrc(post.images[0])}
               />
             ) : (
               <div style={{ padding: 24 }}>无图片</div>
@@ -451,7 +451,7 @@ const PostDetailPage: React.FC = () => {
                     key={index}
                     width={80}
                     height={80}
-                    src={formatBase64(img)}
+                    src={imgSrc(img)}
                     style={{ 
                       cursor: 'pointer', 
                       objectFit: 'cover',

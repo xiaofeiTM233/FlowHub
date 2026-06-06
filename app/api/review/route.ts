@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { pushReview, getTags } from '@/lib/review';
 import { publish } from '@/lib/publish';
+import { resolveImages } from '@/lib/storage';
 import { authApi } from "@/lib/auth";
 import dbConnect from '@/lib/db';
 import Draft from '@/models/drafts';
@@ -220,7 +221,8 @@ export async function POST(request: NextRequest) {
         }, { status: 200 });
       case 'tag': // 获取标签
         if (process.env.REVIEW_TAG_URL) {
-          const tags = await getTags(draft.images[0]);
+          const images = await resolveImages(draft.images);
+          const tags = await getTags(images[0]);
           draft.tags = tags;
           draft.review.comments.push({mid, reason, timestmap: Date.now()});
           await draft.save();
@@ -237,8 +239,9 @@ export async function POST(request: NextRequest) {
         }
       case 'repush': // 重新推送审核
         const aid = option.review_push_platform;
-        const account = await Account.findOne({ aid });
-        const repush = await pushReview(account, draft, draft.images[0], option);
+        const repushAccount = await Account.findOne({ aid });
+        const repushImages = await resolveImages(draft.images);
+        const repush = await pushReview(repushAccount, draft, repushImages[0], option);
         return NextResponse.json({
           code: 0,
           message: `已重新推送投稿 ${draft._id}`,

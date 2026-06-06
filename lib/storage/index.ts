@@ -150,6 +150,26 @@ export async function delFile(attachmentId: string): Promise<void> {
   await Attachment.findByIdAndDelete(attachmentId);
 }
 
+/**
+ * 将 images 数组中的附件 ID 解析为 base64 字符串。
+ * 兼容旧的 base64/URL 直存格式（不作转换）。
+ */
+export async function resolveImages(images: string[]): Promise<string[]> {
+  const resolved: string[] = [];
+  for (const img of images) {
+    if (!img) continue;
+    // 已是完整 base64 或 http URL → 原样返回（向后兼容旧数据）
+    if (img.startsWith('data:') || img.startsWith('http') || img.length > 1000) {
+      resolved.push(img);
+    } else {
+      // 附件 ID → 通过存储层读取
+      const buf = await getFile(img);
+      resolved.push(buf.toString('base64'));
+    }
+  }
+  return resolved;
+}
+
 // 重新导出类型和类
 export type { StorageAdapter, StorageType, AttachmentData, StorageConfig };
 export { Base64Adapter, VercelBlobAdapter, R2Adapter, WebdavAdapter };

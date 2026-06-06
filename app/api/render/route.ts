@@ -5,6 +5,7 @@ import { readFile } from 'fs/promises';
 import { NextRequest, NextResponse } from "next/server";
 import { pushReview } from '@/lib/review';
 import { render } from '@/lib/renderer';
+import { saveFile } from '@/lib/storage';
 import { authApi } from "@/lib/auth";
 import dbConnect from '@/lib/db';
 import Draft from '@/models/drafts';
@@ -173,17 +174,21 @@ export async function POST(request: NextRequest) {
     // 5. 如果是投稿，推送审核
     if (body.type === 'post') {
       draft.images = [];
-      draft.images.push(image)
+      // 通过存储管线保存图片
+      const buffer = typeof image === 'string' ? Buffer.from(image, 'base64') : image;
+      const att = await saveFile(`${draft._id}.png`, buffer, 'png', 'renderer');
+      draft.images.push(att._id);
       draft.type = 'pending';
       if (draft.sender.platform.length === 0) {
         draft.sender.platform = option.default_platform;
       }
       await draft.save();
       console.log('[Render] 推送审核');
-      // 推送审核
+      // 推送审核（OneBot 需要 base64 格式）
+      const pushImage = typeof image === 'string' ? image : buffer.toString('base64');
       const aid = option.review_push_platform;
       const account = await Account.findOne({ aid });
-      const result = await pushReview(account, draft, image, option);
+      const result = await pushReview(account, draft, pushImage, option);
       return NextResponse.json({
         code: 0,
         message: '渲染完成并已推送待审',
