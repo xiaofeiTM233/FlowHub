@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { authApi } from "@/lib/auth";
 import dbConnect from '@/lib/db';
 import Option from '@/models/options';
+import { resetAdapter } from '@/lib/storage';
 
 /**
  * 获取设置信息
@@ -29,6 +30,10 @@ export async function GET(request: NextRequest) {
       }, { status: 404 });
     }
     const theOption = option;
+    // 非 sysop 用户无权查看/编辑存储平台配置
+    if (user.role !== 'sysop') {
+      delete theOption.storage_platforms;
+    }
     // 返回设置内容
     return NextResponse.json({
       code: 0,
@@ -61,11 +66,16 @@ export async function POST(request: NextRequest) {
   }
   // 解析请求参数
   const { data } = await request.json();
+
   // 查找并更新设置
   const theOption = await Option.findOneAndUpdate(
     { _id: '000000000000000000000000' },
     { $set: data }
   );
+
+  // 存储配置变更后重置适配器缓存，下次请求按新配置创建
+  resetAdapter();
+
   // 返回操作结果
   return NextResponse.json({
     code: 0,

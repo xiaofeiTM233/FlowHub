@@ -11,7 +11,9 @@ const optionSchema = new mongoose.Schema({
   approve_num: { type: Number, default: 1 },
   reject_num: { type: Number, default: 1 },
   total_num: { type: Number, default: 0 },
-  last_number: { type: Number, default: 0 }
+  last_number: { type: Number, default: 0 },
+  storage_platforms: { type: [mongoose.Schema.Types.Mixed], default: [] },
+  default_storage_platform: { type: String, default: 'base64' }
 }, {
   timestamps: true,
   versionKey: false
