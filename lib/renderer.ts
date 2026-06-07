@@ -193,16 +193,15 @@ export async function render(
 }
 
 async function getBrowser() {
-  let browser: Browser | null = null;
   if (process.env.RENDER_TYPE === '1') {
     // 连接到远程 Chrome 实例
     const browserWSEndpoint = process.env.REMOTE_CHROME_URL;
     if (!browserWSEndpoint) {
       throw new Error('未设置 REMOTE_CHROME_URL 环境变量');
     }
-    browser = await puppeteer.connect({ browserWSEndpoint });
+    return await puppeteer.connect({ browserWSEndpoint });
   } else if (process.env.RENDER_TYPE === '0') {
-    // 连接到本地 Chrome 实例
+    // 本地 Sparticuz/chromium-min
     if (process.platform !== 'linux') {
       throw new Error(
         `RENDER_TYPE=0 (Sparticuz/chromium) 仅支持 Linux 平台，当前平台为 ${process.platform}。`
@@ -212,8 +211,7 @@ async function getBrowser() {
     const chromium = (await import('@sparticuz/chromium-min')).default;
     const packUrl = process.env.CHROMIUM_PACK_URL
       || 'https://github.com/Sparticuz/chromium/releases/download/v149.0.0/chromium-v149.0.0-pack.x64.tar';
-    let browser: Browser | null = null;
-    browser = await puppeteer.launch({
+    return await puppeteer.launch({
       args: [
         ...chromium.args,
         '--no-sandbox',
@@ -227,5 +225,4 @@ async function getBrowser() {
   } else {
     throw new Error('不支持的 RENDER_TYPE');
   }
-  return browser;
 }
