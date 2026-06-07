@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
     const uid = searchParams.get('uid');
     const timeRange = searchParams.get('updatedAt') || searchParams.get('createdAt');
 
-    const filter: mongoose.FilterQuery<AccountType> = {};
+    const filter: Record<string, any> = {};
     if (platform) filter.platform = { $regex: platform, $options: 'i' };
     if (aid) filter.aid = { $regex: aid, $options: 'i' };
     if (uid) filter.uid = { $regex: uid, $options: 'i' };

@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
     const role = searchParams.get('role');
     const timeRange = searchParams.get('updatedAt') || searchParams.get('createdAt');
 
-    const filter: mongoose.FilterQuery<ModeratorType> = {};
+    const filter: Record<string, any> = {};
     if (mid) filter.mid = { $regex: mid, $options: 'i' };
     if (role) filter.role = { $regex: role, $options: 'i' };
 

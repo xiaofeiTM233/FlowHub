@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
     const isAnonymous = searchParams.get('anonymous');
     const timeRange = searchParams.get('createdAt');
     // 构建查询条件
-    const filter: mongoose.FilterQuery<DraftType> = {};
+    const filter: Record<string, any> = {};
     // 发布者搜索（支持用户ID和昵称）
     if (publisher) {
       const isNumeric = /^\d+$/.test(publisher);

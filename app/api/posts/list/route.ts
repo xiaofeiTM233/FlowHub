@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
     const type = searchParams.get('type');
     const isAnonymous = searchParams.get('anonymous');
     const timeRange = searchParams.get('createdAt');
-    const filter: mongoose.FilterQuery<PostType> = {};
+    const filter: Record<string, any> = {};
     // 正文搜索
     if (q) {
       filter['content.text'] = { $regex: q, $options: 'i' };
