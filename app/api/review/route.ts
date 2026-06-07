@@ -239,7 +239,13 @@ export async function POST(request: NextRequest) {
         }
       case 'repush': // 重新推送审核
         const aid = option.review_push_platform;
-        const repushAccount = await Account.findOne({ aid });
+        const repushAccount = aid ? await Account.findOne({ aid }) : null;
+        if (!repushAccount) {
+          return NextResponse.json({
+            code: -1,
+            message: `重新推送失败：未配置推送平台或账号不存在 (aid: ${aid || '(空)'})，请检查系统配置中的 review_push_platform`
+          }, { status: 400 });
+        }
         const repushImages = await resolveImages(draft.images);
         const repush = await pushReview(repushAccount, draft, repushImages[0], option);
         return NextResponse.json({

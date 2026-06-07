@@ -183,20 +183,32 @@ export async function POST(request: NextRequest) {
         draft.sender.platform = option.default_platform;
       }
       await draft.save();
-      console.log('[Render] 推送审核');
       // 推送审核（OneBot 需要 base64 格式）
-      const pushImage = typeof image === 'string' ? image : buffer.toString('base64');
       const aid = option.review_push_platform;
-      const account = await Account.findOne({ aid });
-      const result = await pushReview(account, draft, pushImage, option);
+      const account = aid ? await Account.findOne({ aid }) : null;
+      if (account) {
+        console.log('[Render] 推送审核');
+        const pushImage = typeof image === 'string' ? image : buffer.toString('base64');
+        const result = await pushReview(account, draft, pushImage, option);
+        return NextResponse.json({
+          code: 0,
+          message: '渲染完成并已推送待审',
+          data: {
+            cid: draft._id,
+            timestamp: draft.timestamp,
+            base64: image,
+            result
+          }
+        });
+      }
+      console.warn('[Render] 跳过推送审核：未配置 review_push_platform 或对应账号不存在');
       return NextResponse.json({
         code: 0,
-        message: '渲染完成并已推送待审',
+        message: '渲染完成（未配置推送平台，跳过审核推送）',
         data: {
           cid: draft._id,
           timestamp: draft.timestamp,
-          base64: image,
-          result
+          base64: image
         }
       });
     }

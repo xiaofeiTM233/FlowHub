@@ -9,6 +9,9 @@ import axios from 'axios';
  * @returns {Promise<any>} 推送操作的结果
  */
 export async function pushNotice(account: any, messages: any, option: any): Promise<any> {
+  if (!account || !account.auth) {
+    throw new Error('推送审核失败：账号对象为空或缺少 auth 配置');
+  }
   const response = await axios.post(
     `${account.auth.url}/send_group_msg?access_token=${account.auth.token}`,
     {

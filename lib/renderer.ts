@@ -139,6 +139,9 @@ export async function render(
       timeout: 1000000,
       waitUntil: 'load'
     });
+    // Puppeteer 25.x 的 setContent 类型不收 networkidle0，
+    // 但 waitForNetworkIdle() 是独立 API，等效效果，覆盖 @font-face 字体等异步资源
+    await page.waitForNetworkIdle();
     const options: ScreenshotOptions = {
       type: 'png',
       omitBackground: false,
@@ -165,7 +168,11 @@ export async function render(
       throw new Error('未找到 #container 元素');
     }
     const result = await body.screenshot(options);
-    page.close().catch((err) => console.error(err))
+    try {
+      await page.close();
+    } catch (e) {
+      console.error('[Render][renderer] 关闭页面失败:', e);
+    }
     if (typeof result === 'string') {
       return result;
     }
@@ -175,7 +182,11 @@ export async function render(
     throw new Error('渲染 HTML 时出错');
   } finally {
     if (browser && process.env.RENDER_TYPE === '1') {
-      await browser.disconnect();
+      try {
+        await browser.disconnect();
+      } catch (e) {
+        console.error('[Render][renderer] 断开浏览器连接失败:', e);
+      }
     } else if (browser && process.env.RENDER_TYPE === '0') {
       // Sparticuz 二进制是 launch 出来的，需要彻底关闭而非 disconnect
       try {
