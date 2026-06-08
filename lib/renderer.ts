@@ -145,6 +145,21 @@ export async function render(
     });
     // Puppeteer 新版兼容
     await page.waitForNetworkIdle({ timeout: 15000 });
+    // 等待字体全部加载完成
+    await Promise.race([
+      page.evaluate(() => document.fonts.ready),
+      new Promise(resolve => setTimeout(() => {
+        console.log('[Render][fonts] 字体加载等待超时');
+        resolve(undefined);
+      }, 15000))
+    ]);
+    const loadedFonts = await page.evaluate(() =>
+      Array.from(document.fonts).map(f => ({
+        family: f.family,
+        status: f.status
+      }))
+    );
+    console.log('[Render][fonts] 字体加载状态:', JSON.stringify(loadedFonts));
     const options: ScreenshotOptions = {
       type: 'png',
       omitBackground: false,
