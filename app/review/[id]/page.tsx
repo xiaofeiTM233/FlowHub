@@ -8,7 +8,7 @@ import { useParams, useRouter } from 'next/navigation';
 
 // 第三方库
 import { App, Button, Col, Descriptions, Flex, Image, Popconfirm, Radio, Row, Spin, Select, Result, Input, InputNumber, Space, Timeline, Avatar, Tooltip } from 'antd';
-import { SyncOutlined, UserSwitchOutlined, BlockOutlined, TagsOutlined, SendOutlined, SafetyOutlined, UserOutlined } from '@ant-design/icons';
+import { SyncOutlined, UserSwitchOutlined, BlockOutlined, TagsOutlined, SendOutlined, SafetyOutlined, UserOutlined, PictureOutlined } from '@ant-design/icons';
 import { PageContainer, ProCard } from '@ant-design/pro-components';
 import axios from 'axios';
 import { useSession } from 'next-auth/react';
@@ -41,7 +41,7 @@ const PostDetailPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeView, setActiveView] = useState('image');
-  
+
   // 输入框和冷却状态管理
   const [commentValue, setCommentValue] = useState('');
   const [numValue, setNumValue] = useState('');
@@ -70,7 +70,7 @@ const PostDetailPage: React.FC = () => {
    */
   useEffect(() => {
     if (!id) return;
-    
+
     const fetchPost = async () => {
       try {
         const response = await axios.get(`/api/review?cid=${id}`);
@@ -81,7 +81,7 @@ const PostDetailPage: React.FC = () => {
         setLoading(false);
       }
     };
-    
+
     fetchPost();
   }, [id]);
 
@@ -146,22 +146,22 @@ const PostDetailPage: React.FC = () => {
   };
 
   /**
-   * 格式化 Base64 图片数据
-   * @param base64 - Base64 编码的图片数据
-   * @returns 完整的 data URL
+   * 格式化图片 src
+   * 附件 ID → /api/storage/ URL；base64 直存 → data URI
    */
-  const formatBase64 = (base64: string) => `data:image/jpeg;base64,${base64}`;
+  const imgSrc = (img: string) =>
+    img?.length > 200 ? `data:image/jpeg;base64,${img}` : `/api/storage/${img}`;
 
   // 加载状态处理
   if (loading) {
     return <PageContainer loading />;
   }
-  
+
   // 错误状态处理
   if (error) {
     return <Result status="error" title="加载失败" subTitle={error} />;
   }
-  
+
   // 数据不存在处理
   if (!post) {
     return <Result status="404" title="404" subTitle="抱歉，该帖子不存在。" />;
@@ -183,10 +183,10 @@ const PostDetailPage: React.FC = () => {
         type: 'post',
         content: updatedContent
       });
-      
+
       // 更新服务器返回的数据
       setPost(response.data.data);
-      
+
       // 立即更新本地状态以提供即时反馈
       setPost({ ...post, content: updatedContent });
       message.success('内容更新成功！');
@@ -210,33 +210,33 @@ const PostDetailPage: React.FC = () => {
           <iframe
             src={`/api/render?cid=${id}`}
             title="HTML"
-            style={{ 
-              width: '100%', 
-              height, 
-              border: '1px solid #f0f0f0', 
-              borderRadius: '8px' 
+            style={{
+              width: '100%',
+              height,
+              border: '1px solid #f0f0f0',
+              borderRadius: '8px'
             }}
           />
         );
-        
+
       case 'json':
         // JSON 内容
         return (
-          <div style={{ 
-            maxHeight: height, 
-            overflow: 'auto', 
-            borderRadius: '8px' 
+          <div style={{
+            maxHeight: height,
+            overflow: 'auto',
+            borderRadius: '8px'
           }}>
-            <SyntaxHighlighter 
-              language="json" 
-              style={vscDarkPlus} 
+            <SyntaxHighlighter
+              language="json"
+              style={vscDarkPlus}
               showLineNumbers
             >
               {JSON.stringify(post.content, null, 2)}
             </SyntaxHighlighter>
           </div>
         );
-        
+
       case 'edit':
         // JSON 编辑
         if (session?.user?.role !== 'sysop') {
@@ -249,10 +249,10 @@ const PostDetailPage: React.FC = () => {
           );
         }
         return (
-          <div style={{ 
-            maxHeight: height, 
-            overflow: 'auto', 
-            borderRadius: '8px' 
+          <div style={{
+            maxHeight: height,
+            overflow: 'auto',
+            borderRadius: '8px'
           }}>
             <JsonEditor
               initialValue={post.content}
@@ -260,23 +260,23 @@ const PostDetailPage: React.FC = () => {
             />
           </div>
         );
-        
+
       case 'image':
       default:
         // 显示图片（默认视图）
         return (
-          <div style={{ 
-            maxHeight: height, 
-            overflow: 'auto', 
-            textAlign: 'center', 
-            background: '#f7f7f7', 
-            borderRadius: '8px' 
+          <div style={{
+            maxHeight: height,
+            overflow: 'auto',
+            textAlign: 'center',
+            background: '#f7f7f7',
+            borderRadius: '8px'
           }}>
             {post.images?.length > 0 ? (
               <Image
                 width="auto"
                 style={{ maxWidth: '100%' }}
-                src={formatBase64(post.images[0])}
+                src={imgSrc(post.images[0])}
               />
             ) : (
               <div style={{ padding: 24 }}>无图片</div>
@@ -359,9 +359,9 @@ const PostDetailPage: React.FC = () => {
                   <Tags tags={post.tags} />
                 </Descriptions.Item>
                 <Descriptions.Item label="票数">
-                  <Stat 
-                    approve={post.review.stat.approve} 
-                    reject={post.review.stat.reject} 
+                  <Stat
+                    approve={post.review.stat.approve}
+                    reject={post.review.stat.reject}
                   />
                 </Descriptions.Item>
                 <Descriptions.Item label="发布账号">
@@ -369,7 +369,7 @@ const PostDetailPage: React.FC = () => {
                 </Descriptions.Item>
               </Descriptions>
             </ProCard>
-            
+
             <ProCard title="审核操作">
               <Flex gap="small" wrap="wrap">
                 <Button
@@ -415,26 +415,27 @@ const PostDetailPage: React.FC = () => {
                     >
                       <Button type="primary" danger ghost icon={<BlockOutlined />}>拉黑</Button>
                     </Popconfirm>
-                    <Button icon={<SyncOutlined />} onClick={() => handleAction('retrial')}>重审</Button>
-                    <Button icon={<UserSwitchOutlined />} onClick={() => handleAction('anonymous')}>切换匿名</Button>
                     <Button icon={<TagsOutlined />} onClick={() => handleAction('tag')} disabled={tagCooldown > 0}>
                       {tagCooldown > 0 ? `更新标签 (${tagCooldown}s)` : '更新标签'}
                     </Button>
-                   <Button icon={<SendOutlined />} onClick={() => handleAction('repush')} disabled={repushCooldown > 0}>
+                    <Button icon={<SendOutlined />} onClick={() => handleAction('repush')} disabled={repushCooldown > 0}>
                       {repushCooldown > 0 ? `重新推送 (${repushCooldown}s)` : '重新推送'}
                     </Button>
+                    <Button icon={<PictureOutlined />} onClick={() => handleAction('rerender')}>重新渲染</Button>
+                    <Button icon={<SyncOutlined />} onClick={() => handleAction('retrial')}>重审</Button>
+                    <Button icon={<UserSwitchOutlined />} onClick={() => handleAction('anonymous')}>切换匿名</Button>
                     <Space.Compact>
-                      <InputNumber placeholder="编号" min={0} value={numValue} onChange={(value: any) => setNumValue(value)} onPressEnter={() => numValue && handleAction('num', numValue)} changeOnWheel/>
+                      <InputNumber placeholder="编号" min={0} value={numValue} onChange={(value: any) => setNumValue(value)} onPressEnter={() => numValue && handleAction('num', numValue)} changeOnWheel />
                       <Button type="primary" onClick={() => handleAction('num', numValue)} disabled={!numValue || numValue === ''}>提交</Button>
                     </Space.Compact>
                     <Space.Compact>
-                      <Select mode="tags" placeholder="aid" style={{ width: '100%' }} defaultValue={post.sender.platform} onChange={(value: string[]) => setPlatformList(value)} options={post.sender.platform.map((i: string) => ({ label: i, value: i }))}/>
+                      <Select mode="tags" placeholder="aid" style={{ minWidth: 130 }} defaultValue={post.sender.platform} onChange={(value: string[]) => setPlatformList(value)} options={post.sender.platform.map((i: string) => ({ label: i, value: i }))} />
                       <Button type="primary" onClick={() => handleAction('platform', platformList)} disabled={!platformList || platformList.length === 0 || platformList === post.sender.platform}>提交</Button>
                     </Space.Compact>
                   </>
                 )}
                 <Space.Compact>
-                  <Input placeholder="评论" value={commentValue} onChange={(e) => setCommentValue(e.target.value)} onPressEnter={() => commentValue && handleAction('comment', commentValue)}/>
+                  <Input placeholder="评论" value={commentValue} onChange={(e) => setCommentValue(e.target.value)} onPressEnter={() => commentValue && handleAction('comment', commentValue)} />
                   <Button type="primary" onClick={() => handleAction('comment', commentValue)} disabled={!commentValue || commentValue.trim() === ''}>提交</Button>
                 </Space.Compact>
               </Flex>
@@ -451,9 +452,9 @@ const PostDetailPage: React.FC = () => {
                     key={index}
                     width={80}
                     height={80}
-                    src={formatBase64(img)}
-                    style={{ 
-                      cursor: 'pointer', 
+                    src={imgSrc(img)}
+                    style={{
+                      cursor: 'pointer',
                       objectFit: 'cover',
                       borderRadius: '4px'
                     }}
@@ -467,12 +468,12 @@ const PostDetailPage: React.FC = () => {
         <Col span={24} order={7}>
           <ProCard title="审核评论">
             {post.review?.comments?.length > 0 ? (
-              <Timeline 
+              <Timeline
                 mode="start"
                 items={post.review.comments.map((comment: any, index: number) => ({
                   key: index,
                   title: (
-                    <Tooltip 
+                    <Tooltip
                       title={
                         <div
                           style={{ display: 'flex' }}

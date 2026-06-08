@@ -2,6 +2,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { pushReview, getTags } from '@/lib/review';
 import { publish } from '@/lib/publish';
+import { getFile } from '@/lib/storage';
+import { toRender } from '@/lib/renderer';
 import { authApi } from "@/lib/auth";
 import dbConnect from '@/lib/db';
 import Draft from '@/models/drafts';
@@ -220,7 +222,8 @@ export async function POST(request: NextRequest) {
         }, { status: 200 });
       case 'tag': // 获取标签
         if (process.env.REVIEW_TAG_URL) {
-          const tags = await getTags(draft.images[0]);
+          const [img] = await getFile([draft.images[0]], 'base64');
+          const tags = await getTags(img);
           draft.tags = tags;
           draft.review.comments.push({mid, reason, timestmap: Date.now()});
           await draft.save();
@@ -237,12 +240,35 @@ export async function POST(request: NextRequest) {
         }
       case 'repush': // 重新推送审核
         const aid = option.review_push_platform;
-        const account = await Account.findOne({ aid });
-        const repush = await pushReview(account, draft, draft.images[0], option);
+        const repushAccount = aid ? await Account.findOne({ aid }) : null;
+        if (!repushAccount) {
+          return NextResponse.json({
+            code: -1,
+            message: `重新推送失败：未配置推送平台或账号不存在 (aid: ${aid || '(空)'})，请检查系统配置中的 review_push_platform`
+          }, { status: 400 });
+        }
+        const [repushImg] = await getFile([draft.images[0]], 'base64');
+        const repush = await pushReview(repushAccount, draft, repushImg, option);
         return NextResponse.json({
           code: 0,
           message: `已重新推送投稿 ${draft._id}`,
           data: repush
+        }, { status: 200 });
+      case 'rerender': // 重新渲染
+        const renderResult = await toRender(
+          draft.content,
+          draft.timestamp,
+          'base64',
+          true
+        );
+        draft.images = [];
+        draft.images.push(renderResult);
+        draft.review.comments.push({mid, reason, timestmap: Date.now()});
+        await draft.save();
+        return NextResponse.json({
+          code: 0,
+          message: `已重新渲染稿件 ${draft._id}`,
+          data: { images: draft.images }
         }, { status: 200 });
       case 'platform': // 修改推送平台
         draft.sender.platform = body.data.platform;

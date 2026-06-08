@@ -59,8 +59,12 @@ const ReviewListPage: React.FC = () => {
       message.info('该帖子没有图片');
       return;
     }
-    // 转换为 antd Image 需要的 src 列表并打开预览
-    const srcList = images.map((img: string) => `data:image/png;base64,${img}`);
+    // 附件 ID → /api/storage/ URL；base64 直存 → data URI（向后兼容）
+    const srcList = images.map((img: string) =>
+      img.length > 200
+        ? `data:image/png;base64,${img}`
+        : `/api/storage/${img}`
+    );
     setPreviewImages(srcList);
     setPreviewCurrent(0);
     setPreviewVisible(true);
