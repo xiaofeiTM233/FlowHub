@@ -2,7 +2,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { pushReview, getTags } from '@/lib/review';
 import { publish } from '@/lib/publish';
-import { resolveImages } from '@/lib/storage';
+import { getFile } from '@/lib/storage';
 import { toRender } from '@/lib/renderer';
 import { authApi } from "@/lib/auth";
 import dbConnect from '@/lib/db';
@@ -222,8 +222,8 @@ export async function POST(request: NextRequest) {
         }, { status: 200 });
       case 'tag': // 获取标签
         if (process.env.REVIEW_TAG_URL) {
-          const images = await resolveImages(draft.images);
-          const tags = await getTags(images[0]);
+          const [img] = await getFile([draft.images[0]], 'base64');
+          const tags = await getTags(img);
           draft.tags = tags;
           draft.review.comments.push({mid, reason, timestmap: Date.now()});
           await draft.save();
@@ -247,8 +247,8 @@ export async function POST(request: NextRequest) {
             message: `重新推送失败：未配置推送平台或账号不存在 (aid: ${aid || '(空)'})，请检查系统配置中的 review_push_platform`
           }, { status: 400 });
         }
-        const repushImages = await resolveImages(draft.images);
-        const repush = await pushReview(repushAccount, draft, repushImages[0], option);
+        const [repushImg] = await getFile([draft.images[0]], 'base64');
+        const repush = await pushReview(repushAccount, draft, repushImg, option);
         return NextResponse.json({
           code: 0,
           message: `已重新推送投稿 ${draft._id}`,

@@ -2,7 +2,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { pushReview } from '@/lib/review';
 import { toRender } from '@/lib/renderer';
-import { resolveImages } from '@/lib/storage';
+import { getFile } from '@/lib/storage';
 import { authApi } from "@/lib/auth";
 import dbConnect from '@/lib/db';
 import Draft from '@/models/drafts';
@@ -147,8 +147,8 @@ export async function POST(request: NextRequest) {
       const account = aid ? await Account.findOne({ aid }) : null;
       if (account) {
         console.log('[Render] 推送审核');
-        const pushImages = await resolveImages([result]);
-        const pushResult = await pushReview(account, draft, pushImages[0], option);
+        const [pushImage] = await getFile([result as string], 'base64');
+        const pushResult = await pushReview(account, draft, pushImage, option);
         return NextResponse.json({
           code: 0,
           message: '渲染完成并已推送待审',

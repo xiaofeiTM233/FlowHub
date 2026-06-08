@@ -112,23 +112,27 @@ export async function saveFile(
 }
 
 /**
- * 根据附件 ID 读取文件。
+ * getFile | 按附件 ID 读取文件，支持多种输出格式。
  */
-export async function getFile(attachmentId: string): Promise<Buffer> {
+export async function getFile(ids: string[], format: 'src' | 'buffer' | 'base64' = 'src'): Promise<(Buffer | string)[]> {
+  if (ids.length === 0) return [];
   await dbConnect();
 
-  const doc = await Attachment.findById(attachmentId);
-  if (!doc) {
-    throw new Error(`附件 ${attachmentId} 不存在`);
-  }
+  const docs = await Attachment.find({ _id: { $in: ids } });
+  const map = new Map(docs.map(d => [String(d._id), d]));
+  const missing = ids.filter(id => !map.has(id));
+  if (missing.length) throw new Error(`附件 ${missing.join(', ')} 不存在`);
 
-  // base64 数据在 src 字段中，不需要走适配器
-  if (doc.type === 'base64') {
-    return Buffer.from(doc.src, 'base64');
-  }
+  if (format === 'src') return ids.map(id => map.get(id)!.src);
 
   const adapter = await getAdapter();
-  return adapter.load(doc.src);
+  return Promise.all(ids.map(async id => {
+    const doc = map.get(id)!;
+    const data = doc.type === 'base64'
+      ? Buffer.from(doc.src, 'base64')
+      : await adapter.load(doc.src);
+    return format === 'base64' ? data.toString('base64') : data;
+  }));
 }
 
 /**
@@ -142,32 +146,12 @@ export async function delFile(attachmentId: string): Promise<void> {
     throw new Error(`附件 ${attachmentId} 不存在`);
   }
 
-  // 从存储中删除文件（base64 的 remove 是 no-op）
+  // 从存储中删除文件
   const adapter = await getAdapter();
   await adapter.remove(doc.src);
 
   // 从数据库删除记录
   await Attachment.findByIdAndDelete(attachmentId);
-}
-
-/**
- * 将 images 数组中的附件 ID 解析为 base64 字符串。
- * 兼容旧的 base64/URL 直存格式（不作转换）。
- */
-export async function resolveImages(images: string[]): Promise<string[]> {
-  const resolved: string[] = [];
-  for (const img of images) {
-    if (!img) continue;
-    // 已是完整 base64 或 http URL → 原样返回（向后兼容旧数据）
-    if (img.startsWith('data:') || img.startsWith('http') || img.length > 1000) {
-      resolved.push(img);
-    } else {
-      // 附件 ID → 通过存储层读取
-      const buf = await getFile(img);
-      resolved.push(buf.toString('base64'));
-    }
-  }
-  return resolved;
 }
 
 // 重新导出类型和类

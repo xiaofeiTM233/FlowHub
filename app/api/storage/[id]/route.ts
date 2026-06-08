@@ -12,8 +12,8 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    const buffer = await getFile(id);
-    return new NextResponse(new Uint8Array(buffer), {
+    const [buffer] = await getFile([id], 'buffer');
+    return new NextResponse(new Uint8Array(buffer as Buffer), {
       headers: {
         'Content-Type': 'image/png',
         'Cache-Control': 'public, max-age=86400'
