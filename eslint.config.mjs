@@ -19,10 +19,6 @@ const eslintConfig = [
       "build/**",
       "next-env.d.ts",
     ],
-    eslint: {
-      // 让你的项目在有 ESLint 错误的情况下也能成功构建
-      ignoreDuringBuilds: true,
-    },
   },
 ];
 
