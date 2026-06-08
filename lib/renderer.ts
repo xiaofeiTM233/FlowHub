@@ -1,7 +1,11 @@
 // lib/renderer.ts
+import path from 'path';
+import { readFile } from 'fs/promises';
+import axios from 'axios';
 import puppeteer, { Browser, ScreenshotOptions } from 'puppeteer-core';
 import mustache from 'mustache';
 import QRCode, { QRCodeToDataURLOptions } from 'qrcode';
+import { saveFile } from '@/lib/storage';
 
 type OutputType = 'base64' | 'buffer' | 'base64Array' | 'html';
 
@@ -109,7 +113,7 @@ async function buildHtml(list: any[]): Promise<string> {
  * @param {string} template - 包含 Mustache 标签的 HTML 模板字符串。
  * @param {Record<string, any>} data - 用于填充模板的 content 对象。
  * @param {OutputType} [outputType='base64'] - 'base64' / 'buffer' / 'base64Array' / 'html'。
- * @returns {Promise<any>} 截图的 Base64 字符串或 Buffer。
+ * @returns {Promise<Buffer|string>} 截图的 Base64 字符串或 Buffer。
  */
 export async function render(
   template: string,
@@ -139,8 +143,7 @@ export async function render(
       timeout: 1000000,
       waitUntil: 'load'
     });
-    // Puppeteer 25.x 的 setContent 类型不收 networkidle0，
-    // 但 waitForNetworkIdle() 是独立 API，等效效果，覆盖 @font-face 字体等异步资源
+    // Puppeteer 新版兼容
     await page.waitForNetworkIdle();
     const options: ScreenshotOptions = {
       type: 'png',
@@ -201,6 +204,60 @@ export async function render(
       }
     }
   }
+}
+
+/**
+ * toRender | 统一渲染管线入口
+ * @param {any} content - Draft 的 content 对象
+ * @param {number} ts - Draft 的时间戳
+ * @param {OutputType} [outputType='base64'] - 输出格式
+ * @param {boolean} att - 保存为附件
+ * @returns {Promise<Buffer|string>}
+ */
+export async function toRender(
+  content: any,
+  ts: number,
+  outputType: OutputType = 'base64',
+  att?: boolean
+): Promise<any> {
+  // 1. 读取 HTML 模板
+  const template = await readFile(
+    path.join(process.cwd(), 'models', 'template.html'),
+    'utf-8'
+  );
+  // 2. 构建完整渲染数据
+  const data = { ...content };
+  data.time = new Date(ts + (8 * 60 * 60 * 1000)).toISOString().slice(0, 19).replace('T', ' ');
+  // 3. 选择本地渲染 or 远程渲染服务
+  let image: any;
+  if (process.env.RENDER_TYPE === '0' || (process.env.RENDER_TYPE === '1' && process.env.REMOTE_CHROME_URL)) {
+    // 调用本地渲染函数
+    image = await render(template, data, outputType);
+  } else if (process.env.RENDER_TYPE === '2' && process.env.RENDER_URL) {
+    // 调用远程渲染函数
+    let newType: 'base64' | 'base64Array' | 'html';
+    if (outputType === 'buffer') {
+      newType = 'base64';
+    } else {
+      newType = outputType;
+    }
+    const cfrender = await axios.post(process.env.RENDER_URL!, { template, data, outputType: newType });
+    if (outputType === 'buffer') {
+      image = Buffer.from(cfrender.data.base64, 'base64');
+    } else {
+      image = cfrender.data[outputType];
+    }
+  } else {
+    throw new Error('服务器内部错误：未设置渲染函数');
+  }
+  // 4. 上传附件
+  if (att) {
+    const buffer = typeof image === 'string' ? Buffer.from(image, 'base64') : image;
+    const att = await saveFile(`${ts}.png`, buffer, 'png', 'renderer');
+    return att._id;
+  }
+  // 5. 直接返回
+  return image;
 }
 
 async function getBrowser() {

@@ -1,11 +1,8 @@
 // app/api/render/route.ts
-import path from 'path';
-import axios from 'axios';
-import { readFile } from 'fs/promises';
 import { NextRequest, NextResponse } from "next/server";
 import { pushReview } from '@/lib/review';
-import { render } from '@/lib/renderer';
-import { saveFile } from '@/lib/storage';
+import { toRender } from '@/lib/renderer';
+import { resolveImages } from '@/lib/storage';
 import { authApi } from "@/lib/auth";
 import dbConnect from '@/lib/db';
 import Draft from '@/models/drafts';
@@ -38,18 +35,10 @@ export async function GET(request: NextRequest) {
         message: `未找到ID为 ${cid} 的帖子`
       }, { status: 404 });
     }
-    // 3. 读取 HTML 模板
-    const template = await readFile(
-      path.join(process.cwd(), 'models', 'template.html'),
-      'utf-8'
-    );
-    // 4. 调用渲染函数
-    let html: any;
-    let data = draft.content;
-    data.time = new Date(draft.timestamp + (8 * 60 * 60 * 1000)).toISOString().slice(0, 19).replace('T', ' ');
-    html = await render(template, data, 'html');
-    // 5. 返回 HTML
-    return new NextResponse(html, {
+    // 3. 调用渲染函数
+    const result = await toRender(draft.content, draft.timestamp, 'html');
+    // 4. 返回 HTML
+    return new NextResponse(result as string, {
       status: 200,
       headers: {
         'Content-Type': 'text/html',
@@ -116,88 +105,58 @@ export async function POST(request: NextRequest) {
       outputType = 'html';
     }
     console.log('[Render] 接收到渲染请求:', outputType);
-    // 3. 读取 HTML 模板
-    const template = await readFile(
-      path.join(process.cwd(), 'models', 'template.html'),
-      'utf-8'
+    // 判断投稿
+    const isAtt = body.type === 'post';
+    // 3. 调用渲染函数
+    const result: Buffer | string = await toRender(
+      draft.content,
+      draft.timestamp,
+      outputType,
+      isAtt
     );
-    // 4. 调用渲染函数
-    let image: any;
-    let data = draft.content;
-    data.time = new Date(draft.timestamp + (8 * 60 * 60 * 1000)).toISOString().slice(0, 19).replace('T', ' ');
-    if (process.env.RENDER_TYPE === '0' || (process.env.RENDER_TYPE === '1' && process.env.REMOTE_CHROME_URL)) {
-      // 调用本地渲染函数
-      image = await render(template, data, outputType);
-    } else if (process.env.RENDER_TYPE === '2' && process.env.RENDER_URL) {
-      // 调用远程渲染函数
-      let newType: 'base64' | 'base64Array' | 'html';
-      if (outputType === 'buffer') {
-        newType = 'base64';
-      } else {
-        newType = outputType;
-      }
-      const cfrender = await axios.post(process.env.RENDER_URL, {
-        template,
-        data,
-        newType
-      });
-      if (outputType === 'buffer') {
-        image = Buffer.from(cfrender.data.base64, 'base64');
-      } else {
-        image = cfrender.data[outputType];
-      }
-    } else {
-      return NextResponse.json({
-        code: -1,
-        message: '服务器内部错误',
-        error: '未设置渲染函数'
-      }, { status: 500 });
-    }
-    if (outputType === 'buffer') {
-      await draft.save();
-      return new NextResponse(image, {
+    // Buffer
+    if (Buffer.isBuffer(result)) {
+      const uint8Array = new Uint8Array(result);
+      return new NextResponse(uint8Array, {
         status: 200,
         headers: {
           'Content-Type': 'image/png',
         },
       });
     }
-    if (outputType === 'html') {
-      await draft.save();
-      return new NextResponse(image, {
+    // HTML
+    if (outputType === 'html' && typeof result === 'string') {
+      return new NextResponse(result as string, {
         status: 200,
         headers: {
           'Content-Type': 'text/html',
         },
       });
     }
-    // 5. 如果是投稿，推送审核
-    if (body.type === 'post') {
+    // 4. 投稿相关
+    if (isAtt) {
       draft.images = [];
-      // 通过存储管线保存图片
-      const buffer = typeof image === 'string' ? Buffer.from(image, 'base64') : image;
-      const att = await saveFile(`${draft._id}.png`, buffer, 'png', 'renderer');
-      draft.images.push(att._id);
+      draft.images.push(result);
       draft.type = 'pending';
       if (draft.sender.platform.length === 0) {
         draft.sender.platform = option.default_platform;
       }
       await draft.save();
-      // 推送审核（OneBot 需要 base64 格式）
+      // 推送审核
       const aid = option.review_push_platform;
       const account = aid ? await Account.findOne({ aid }) : null;
       if (account) {
         console.log('[Render] 推送审核');
-        const pushImage = typeof image === 'string' ? image : buffer.toString('base64');
-        const result = await pushReview(account, draft, pushImage, option);
+        const pushImages = await resolveImages([result]);
+        const pushResult = await pushReview(account, draft, pushImages[0], option);
         return NextResponse.json({
           code: 0,
           message: '渲染完成并已推送待审',
           data: {
             cid: draft._id,
+            fid: result,
             timestamp: draft.timestamp,
-            base64: image,
-            result
+            result: pushResult
           }
         });
       }
@@ -207,18 +166,17 @@ export async function POST(request: NextRequest) {
         message: '渲染完成（未配置推送平台，跳过审核推送）',
         data: {
           cid: draft._id,
-          timestamp: draft.timestamp,
-          base64: image
+          fid: result,
+          timestamp: draft.timestamp
         }
       });
     }
-    await draft.save();
     return NextResponse.json({
       code: 0,
       message: '渲染完成',
       data: {
         cid: draft._id,
-        base64: image
+        base64: result
       }
     });
   } catch (error) {
