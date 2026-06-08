@@ -111,7 +111,7 @@ const ModeratorPage: React.FC = () => {
       title: '更新时间',
       dataIndex: 'updatedAt',
       valueType: 'dateTime',
-      hideInSearch: true,
+      search: false,
       render: (_, record) => {
         const t = record.updatedAt || record.createdAt;
         if (!t) return '-';

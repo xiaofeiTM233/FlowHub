@@ -129,8 +129,8 @@ export async function render(
       height: 1080
     });
     await page.setContent(html, {
-      timeout: 1000000,
-      waitUntil: 'networkidle0'
+      timeout: 15000,
+      waitUntil: 'load'
     });
     const options: ScreenshotOptions = {
       type: 'png',
