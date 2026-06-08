@@ -29,7 +29,8 @@ export async function GET(request: NextRequest) {
         message: `未找到设置，请先初始化设置`
       }, { status: 404 });
     }
-    const theOption = option;
+    // 转为普通对象
+    const theOption = option.toObject();
     // 非 sysop 用户无权查看/编辑存储平台配置
     if (user.role !== 'sysop') {
       delete theOption.storage_platforms;

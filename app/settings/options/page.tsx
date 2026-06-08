@@ -45,14 +45,12 @@ const STORAGE_TYPE_OPTIONS = [
 const STORAGE_TYPE_META: Record<string, StorageTypeMeta> = {
   vercel: {
     label: 'Vercel Blob',
-    extra: '获取 Token：Vercel Dashboard → Storage → Blob → Create Token',
     fields: [
       { key: 'token', label: 'BLOB_READ_WRITE_TOKEN', placeholder: 'vercel_blob_xxx...', password: true, required: true },
     ],
   },
   r2: {
     label: 'Cloudflare R2',
-    extra: '获取凭证：Cloudflare Dashboard → R2 → Manage API Tokens',
     fields: [
       { key: 'access_key_id', label: 'Access Key ID', placeholder: '输入 R2 Access Key ID', required: true },
       { key: 'secret_access_key', label: 'Secret Access Key', placeholder: '输入 R2 Secret Access Key', password: true },
@@ -63,7 +61,6 @@ const STORAGE_TYPE_META: Record<string, StorageTypeMeta> = {
   },
   webdav: {
     label: 'WebDAV',
-    extra: '支持坚果云、阿里云盘、NextCloud 等任意 WebDAV 服务',
     fields: [
       { key: 'url', label: 'WebDAV 地址', placeholder: 'https://dav.jianguoyun.com/dav/', required: true },
       { key: 'user', label: '用户名', placeholder: '输入 WebDAV 用户名', required: true },
@@ -140,7 +137,7 @@ const StoragePlatformEntry: React.FC<StoragePlatformEntryProps> = ({ name, restF
         label="平台备注"
         rules={[{ required: true, message: '请输入平台备注' }]}
       >
-        <Input placeholder="如：主号 Blob" disabled={form?.getFieldValue('disabled')} />
+        <Input disabled={form?.getFieldValue('disabled')} />
       </Form.Item>
 
       {/* 类型决定的条件字段 */}
@@ -457,7 +454,8 @@ const OptionsEditPage: React.FC = () => {
           </ProForm>
         </ProCard>
 
-        {/* ===== 附件存储设置 ===== */}
+        {/* ===== 附件存储设置（仅 sysop 可查看/编辑） ===== */}
+        {isSysop && (
         <ProCard title="附件存储">
           <Form
             form={form}
@@ -527,6 +525,7 @@ const OptionsEditPage: React.FC = () => {
             />
           </Form>
         </ProCard>
+        )}
       </Space>
     </PageContainer>
   );
