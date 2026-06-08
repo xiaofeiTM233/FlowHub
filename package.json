@@ -1,6 +1,6 @@
 {
   "name": "flow-hub",
-  "version": "0.3.1",
+  "version": "0.4.1",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -44,11 +44,6 @@
     "eslint-config-next": "16.2.7",
     "tailwindcss": "^4",
     "typescript": "^6"
-  },
-  "overrides": {
-    "@ant-design/pro-components": {
-      "antd": "^6.0.0"
-    }
   },
   "optionalDependencies": {
     "@tailwindcss/oxide-linux-x64-gnu": "^4.3.0"
