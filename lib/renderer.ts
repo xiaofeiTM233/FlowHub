@@ -140,11 +140,11 @@ export async function render(
       height: 1080
     });
     await page.setContent(html, {
-      timeout: 1000000,
+      timeout: 15000,
       waitUntil: 'load'
     });
     // Puppeteer 新版兼容
-    await page.waitForNetworkIdle();
+    await page.waitForNetworkIdle({ timeout: 15000 });
     const options: ScreenshotOptions = {
       type: 'png',
       omitBackground: false,
