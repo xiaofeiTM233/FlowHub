@@ -356,7 +356,6 @@ const OptionsEditPage: React.FC = () => {
                   label="默认发布平台"
                   mode="tags"
                   placeholder="请选择默认发布平台"
-                  rules={[{ required: true, message: '请选择至少一个默认平台' }]}
                 />
               </Col>
               <Col span={12}>
@@ -364,7 +363,6 @@ const OptionsEditPage: React.FC = () => {
                   name="review_push_platform"
                   label="审核推送平台(OneBot)"
                   placeholder="请选择审核推送平台"
-                  rules={[{ required: true, message: '请选择审核推送平台' }]}
                 />
               </Col>
             </Row>
@@ -385,7 +383,6 @@ const OptionsEditPage: React.FC = () => {
                   label="审核推送群号(OneBot)"
                   placeholder="请输入审核推送群号"
                   fieldProps={{ style: { width: '100%' } }}
-                  rules={[{ required: true, message: '请输入审核推送群号' }]}
                 />
               </Col>
             </Row>
