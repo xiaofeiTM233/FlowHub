@@ -3,7 +3,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { authApi } from "@/lib/auth";
 import dbConnect from '@/lib/db';
 import Option from '@/models/options';
-import { resetAdapter } from '@/lib/storage';
 
 /**
  * 获取设置信息
@@ -73,9 +72,6 @@ export async function POST(request: NextRequest) {
     { _id: '000000000000000000000000' },
     { $set: data }
   );
-
-  // 存储配置变更后重置适配器缓存，下次请求按新配置创建
-  resetAdapter();
 
   // 返回操作结果
   return NextResponse.json({
