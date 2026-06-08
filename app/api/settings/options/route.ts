@@ -28,7 +28,12 @@ export async function GET(request: NextRequest) {
         message: `未找到设置，请先初始化设置`
       }, { status: 404 });
     }
-    const theOption = option;
+    // 转为普通对象
+    const theOption = option.toObject();
+    // 非 sysop 用户无权查看/编辑存储平台配置
+    if (user.role !== 'sysop') {
+      delete theOption.storage_platforms;
+    }
     // 返回设置内容
     return NextResponse.json({
       code: 0,
@@ -61,11 +66,13 @@ export async function POST(request: NextRequest) {
   }
   // 解析请求参数
   const { data } = await request.json();
+
   // 查找并更新设置
   const theOption = await Option.findOneAndUpdate(
     { _id: '000000000000000000000000' },
     { $set: data }
   );
+
   // 返回操作结果
   return NextResponse.json({
     code: 0,

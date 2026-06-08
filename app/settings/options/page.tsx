@@ -2,12 +2,12 @@
 'use client';
 
 // React 相关
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 // 第三方库
-import { Alert, App, Col, Flex, Form, Row, Space } from 'antd';
-import { SaveOutlined } from '@ant-design/icons';
+import { Alert, App, Button, Col, Flex, Form, Input, Row, Select, Space, Typography } from 'antd';
+import { DeleteOutlined, PlusOutlined, SaveOutlined } from '@ant-design/icons';
 import { PageContainer, ProCard, ProForm, ProFormText, ProFormSelect, ProFormSwitch, ProFormDigit } from '@ant-design/pro-components';
 import axios from 'axios';
 import { useSession } from 'next-auth/react';
@@ -15,10 +15,189 @@ import { useSession } from 'next-auth/react';
 // 内部组件
 import itemRender from '@/components/itemRender';
 
-/**
- * 设置编辑页面组件
- * 用于编辑系统设置
- */
+const { Text } = Typography;
+
+// ===== 存储类型配置（数据驱动） =====
+
+interface StorageFieldDef {
+  key: string;
+  label: string;
+  placeholder: string;
+  password?: boolean;
+  required?: boolean;
+  extra?: string;
+}
+
+interface StorageTypeMeta {
+  label: string;
+  extra?: string;
+  fields: StorageFieldDef[];
+}
+
+/** 可选的存储类型下拉项 */
+const STORAGE_TYPE_OPTIONS = [
+  { label: 'Vercel Blob', value: 'vercel' },
+  { label: 'Cloudflare R2', value: 'r2' },
+  { label: 'WebDAV', value: 'webdav' },
+];
+
+/** 每种存储类型对应的字段定义，新增平台只需在此追加 */
+const STORAGE_TYPE_META: Record<string, StorageTypeMeta> = {
+  vercel: {
+    label: 'Vercel Blob',
+    fields: [
+      { key: 'token', label: 'BLOB_READ_WRITE_TOKEN', placeholder: 'vercel_blob_xxx...', password: true, required: true },
+    ],
+  },
+  r2: {
+    label: 'Cloudflare R2',
+    fields: [
+      { key: 'access_key_id', label: 'Access Key ID', placeholder: '输入 R2 Access Key ID', required: true },
+      { key: 'secret_access_key', label: 'Secret Access Key', placeholder: '输入 R2 Secret Access Key', password: true },
+      { key: 'endpoint', label: 'Endpoint', placeholder: 'https://<account>.r2.cloudflarestorage.com', required: true },
+      { key: 'bucket', label: '存储桶名称', placeholder: '输入 R2 Bucket 名称', required: true },
+      { key: 'public_url', label: '公开访问 URL（可选）', placeholder: 'https://your-domain.com 或留空', extra: '绑定自定义域名后填写，留空则使用 R2 原生 endpoint' },
+    ],
+  },
+  webdav: {
+    label: 'WebDAV',
+    fields: [
+      { key: 'url', label: 'WebDAV 地址', placeholder: 'https://dav.jianguoyun.com/dav/', required: true },
+      { key: 'user', label: '用户名', placeholder: '输入 WebDAV 用户名', required: true },
+      { key: 'pass', label: '密码 / 应用密码', placeholder: '输入密码', password: true, required: true },
+      { key: 'base_path', label: '存储根路径（可选）', placeholder: '/flowhub/' },
+    ],
+  },
+};
+
+// ===== 单个存储配置条目子组件 =====
+
+interface StoragePlatformEntryProps {
+  name: number;
+  restField: Record<string, any>;
+  onRemove: () => void;
+}
+
+const StoragePlatformEntry: React.FC<StoragePlatformEntryProps> = ({ name, restField, onRemove }) => {
+  const form = Form.useFormInstance();
+  // 监听当前条目的类型字段，切换时重新渲染
+  const entryType: string | undefined = Form.useWatch(['storage_platforms', name, 'type'], form);
+  const meta = entryType ? STORAGE_TYPE_META[entryType] : undefined;
+
+  /**
+   * 切换存储类型时，清空当前条目已有的特定字段值，
+   * 避免 vercel 的 token 出现在 r2 的数据中。
+   */
+  const handleTypeChange = () => {
+    const resetValues: Record<string, undefined> = {};
+    // 遍历全部类型的全部字段，统一置空
+    Object.values(STORAGE_TYPE_META).forEach((m) => {
+      m.fields.forEach((f) => { resetValues[f.key] = undefined; });
+    });
+    form.setFieldsValue({
+      storage_platforms: { [name]: resetValues },
+    });
+  };
+
+  return (
+    <ProCard
+      size="small"
+      type="inner"
+      title={meta?.label || '新存储配置'}
+      extra={
+        <Button
+          type="text"
+          danger
+          icon={<DeleteOutlined />}
+          onClick={onRemove}
+          disabled={form?.getFieldValue('disabled')}
+        />
+      }
+      style={{ marginBottom: 16 }}
+    >
+      {/* 存储类型选择 */}
+      <Form.Item
+        {...restField}
+        name={[name, 'type']}
+        label="存储类型"
+        rules={[{ required: true, message: '请选择存储类型' }]}
+      >
+        <Select
+          options={STORAGE_TYPE_OPTIONS}
+          placeholder="选择存储类型"
+          onChange={handleTypeChange}
+          disabled={form?.getFieldValue('disabled')}
+        />
+      </Form.Item>
+
+      {/* 平台备注 */}
+      <Form.Item
+        {...restField}
+        name={[name, 'name']}
+        label="平台备注"
+        rules={[{ required: true, message: '请输入平台备注' }]}
+      >
+        <Input disabled={form?.getFieldValue('disabled')} />
+      </Form.Item>
+
+      {/* 类型决定的条件字段 */}
+      {meta && (
+        <>
+          {meta.extra && (
+            <Text type="secondary" style={{ display: 'block', marginBottom: 12 }}>
+              {meta.extra}
+            </Text>
+          )}
+
+          {meta.fields.length <= 2 ? (
+            // 1~2 个字段：垂直排列
+            meta.fields.map((def) => (
+              <Form.Item
+                key={def.key}
+                {...restField}
+                name={[name, def.key]}
+                label={def.label}
+                rules={def.required ? [{ required: true, message: `请输入${def.label}` }] : []}
+                extra={def.extra}
+              >
+                {def.password
+                  ? <Input.Password placeholder={def.placeholder} disabled={form?.getFieldValue('disabled')} />
+                  : <Input placeholder={def.placeholder} disabled={form?.getFieldValue('disabled')} />
+                }
+              </Form.Item>
+            ))
+          ) : (
+            // 3+ 个字段：两列网格，单行备注字段占整行
+            <Row gutter={16}>
+              {meta.fields.map((def) => {
+                const isFullWidth = def.key === 'public_url' || def.key === 'base_path';
+                return (
+                  <Col span={isFullWidth ? 24 : 12} key={def.key}>
+                    <Form.Item
+                      {...restField}
+                      name={[name, def.key]}
+                      label={def.label}
+                      rules={def.required ? [{ required: true, message: `请输入${def.label}` }] : []}
+                      extra={def.extra}
+                    >
+                      {def.password
+                        ? <Input.Password placeholder={def.placeholder} disabled={form?.getFieldValue('disabled')} />
+                        : <Input placeholder={def.placeholder} disabled={form?.getFieldValue('disabled')} />
+                      }
+                    </Form.Item>
+                  </Col>
+                );
+              })}
+            </Row>
+          )}
+        </>
+      )}
+    </ProCard>
+  );
+};
+
+// ===== 主页面组件 =====
+
 const OptionsEditPage: React.FC = () => {
   const { message } = App.useApp();
 
@@ -29,7 +208,7 @@ const OptionsEditPage: React.FC = () => {
 
   // 路由对象
   const router = useRouter();
-  
+
   const [form] = Form.useForm();
 
   // 获取用户会话信息
@@ -39,11 +218,10 @@ const OptionsEditPage: React.FC = () => {
       message.warning('请先登录');
       router.push('/dashboard/login');
     },
-  }) as { data: any, status: string };
+  }) as { data: any; status: string };
 
   /**
    * 获取设置数据
-   * 从 API 获取系统设置信息
    */
   useEffect(() => {
     const fetchOptions = async () => {
@@ -51,7 +229,12 @@ const OptionsEditPage: React.FC = () => {
         const response = await axios.get('/api/settings/options');
         if (response.data.code === 0) {
           const optionsData = response.data.data;
-          setOptions(optionsData);
+          // 非 sysop 用户 API 不返回存储相关字段，前端兜底为空数组，防止 ProForm 内部 Object.entries(undefined)
+          const normalized = {
+            ...optionsData,
+            storage_platforms: optionsData.storage_platforms || [],
+          };
+          setOptions(normalized);
         } else {
           message.error(response.data.message || '获取设置失败');
           router.back();
@@ -68,20 +251,16 @@ const OptionsEditPage: React.FC = () => {
 
   /**
    * 处理表单提交
-   * @param values - 表单数据
    */
   const handleSubmit = async (values: any) => {
     setSubmitting(true);
     try {
-      const submitData = {
-        data: {
-          ...values
-        }
-      };
+      // 表单中 storage_platforms 已经是数组，直接提交
+      const submitData = { data: values };
       const response = await axios.post('/api/settings/options', submitData);
       if (response.data.code === 0) {
         message.success('设置保存成功');
-        setOptions({ ...options, ...values });
+        setOptions(values);
       } else {
         message.error(response.data.message || '保存失败');
       }
@@ -92,27 +271,47 @@ const OptionsEditPage: React.FC = () => {
     }
   };
 
+  // Form.useWatch / useMemo 必须在条件返回之前调用，确保 Hook 数量跨渲染一致
+  // 加载阶段 Form 尚未挂载，watchedPlatforms 通过 fallback 退回到空数组
+  const watchedPlatforms: any[] = Form.useWatch('storage_platforms', form) || [];
+
+  const platformOptions = useMemo(() => {
+    const source = Array.isArray(watchedPlatforms) && watchedPlatforms.length > 0
+      ? watchedPlatforms
+      : options?.storage_platforms || [];
+    const configured = (Array.isArray(source) ? source : [])
+      .filter((p: any) => p?.name)
+      .map((p: any) => ({ label: p.name, value: p.name }));
+    return [{ label: 'Base64（默认）', value: 'base64' }, ...configured];
+  }, [watchedPlatforms, options]);
+
   // 加载状态处理
   if (loading) {
-    return <PageContainer
-      loading
-      header={{
-        title: '',
-        breadcrumb: {
-          items: [
-            {
-              title: '系统管理'
-            },
-            {
-              path: '/settings/options',
-              title: '系统设置',
-            },
-          ],
-          itemRender
-        }
-      }}
-    />;
+    return (
+      <PageContainer
+        loading
+        header={{
+          title: '',
+          breadcrumb: {
+            items: [
+              { title: '系统管理' },
+              { path: '/settings/options', title: '系统设置' },
+            ],
+            itemRender,
+          },
+        }}
+      />
+    );
   }
+
+  const isSysop = session?.user?.role === 'sysop';
+
+  const submitterConfig = isSysop
+    ? {
+        searchConfig: { submitText: '保存设置' },
+        submitButtonProps: { icon: <SaveOutlined />, loading: submitting },
+      }
+    : false;
 
   return (
     <PageContainer
@@ -120,54 +319,35 @@ const OptionsEditPage: React.FC = () => {
         title: '',
         breadcrumb: {
           items: [
-            {
-              title: '系统管理'
-            },
-            {
-              path: '/settings/options',
-              title: '系统设置',
-            },
+            { title: '系统管理' },
+            { path: '/settings/options', title: '系统设置' },
           ],
-          itemRender
-        }
+          itemRender,
+        },
       }}
     >
       <Space orientation="vertical" size="middle" style={{ display: 'flex' }}>
         <ProCard>
           <Flex justify="space-between" align="center" style={{ minHeight: 32 }}>
-            <span>
-              设置ID: {options._id}
-            </span>
+            <span>设置ID: {options._id}</span>
           </Flex>
         </ProCard>
-        
+
+        {/* ===== 基本设置 ===== */}
         <ProCard>
           <ProForm
             form={form}
             initialValues={options}
-            onReset={() => {
-              form.resetFields();
-            }}
+            onReset={() => form.resetFields()}
             onFinish={handleSubmit}
-            submitter={session?.user?.role === 'sysop' ? {
-              searchConfig: {
-                submitText: '保存设置',
-              },
-              submitButtonProps: {
-                icon: <SaveOutlined />,
-                loading: submitting,
-              },
-            } : false}
-            disabled={session?.user?.role !== 'sysop'}
+            submitter={submitterConfig}
+            disabled={!isSysop}
           >
             <ProFormText
               name="description"
               label="系统描述"
               placeholder="请输入系统描述"
-              fieldProps={{
-                maxLength: 100,
-                showCount: true,
-              }}
+              fieldProps={{ maxLength: 100, showCount: true }}
               rules={[{ required: true, message: '请输入系统描述' }]}
             />
             <Row gutter={16}>
@@ -177,7 +357,6 @@ const OptionsEditPage: React.FC = () => {
                   label="默认发布平台"
                   mode="tags"
                   placeholder="请选择默认发布平台"
-                  rules={[{ required: true, message: '请选择至少一个默认平台' }]}
                 />
               </Col>
               <Col span={12}>
@@ -185,7 +364,6 @@ const OptionsEditPage: React.FC = () => {
                   name="review_push_platform"
                   label="审核推送平台(OneBot)"
                   placeholder="请选择审核推送平台"
-                  rules={[{ required: true, message: '请选择审核推送平台' }]}
                 />
               </Col>
             </Row>
@@ -196,9 +374,7 @@ const OptionsEditPage: React.FC = () => {
                   label="最后稿件编号"
                   placeholder="最后生成的稿件编号"
                   min={0}
-                  fieldProps={{
-                    style: { width: '100%' }
-                  }}
+                  fieldProps={{ style: { width: '100%' } }}
                   rules={[{ required: true, message: '请输入最后稿件编号' }]}
                 />
               </Col>
@@ -207,10 +383,7 @@ const OptionsEditPage: React.FC = () => {
                   name="review_push_group"
                   label="审核推送群号(OneBot)"
                   placeholder="请输入审核推送群号"
-                  fieldProps={{
-                    style: { width: '100%' }
-                  }}
-                  rules={[{ required: true, message: '请输入审核推送群号' }]}
+                  fieldProps={{ style: { width: '100%' } }}
                 />
               </Col>
             </Row>
@@ -237,9 +410,7 @@ const OptionsEditPage: React.FC = () => {
                   label="批准票数要求"
                   placeholder="请输入批准所需的票数"
                   min={1}
-                  fieldProps={{
-                    style: { width: '100%' }
-                  }}
+                  fieldProps={{ style: { width: '100%' } }}
                   rules={[{ required: true, message: '请输入批准票数' }]}
                 />
                 <ProFormDigit
@@ -247,9 +418,7 @@ const OptionsEditPage: React.FC = () => {
                   label="拒绝票数要求"
                   placeholder="请输入拒绝所需的票数"
                   min={1}
-                  fieldProps={{
-                    style: { width: '100%' }
-                  }}
+                  fieldProps={{ style: { width: '100%' } }}
                   rules={[{ required: true, message: '请输入拒绝票数' }]}
                 />
                 <ProFormDigit
@@ -257,9 +426,7 @@ const OptionsEditPage: React.FC = () => {
                   label="净票数要求"
                   placeholder="请输入净票数要求"
                   min={0}
-                  fieldProps={{
-                    style: { width: '100%' }
-                  }}
+                  fieldProps={{ style: { width: '100%' } }}
                   rules={[{ required: true, message: '请输入净票数要求' }]}
                 />
               </div>
@@ -290,6 +457,79 @@ const OptionsEditPage: React.FC = () => {
             </div>
           </ProForm>
         </ProCard>
+
+        {/* ===== 附件存储设置（仅 sysop 可查看/编辑） ===== */}
+        {isSysop && (
+        <ProCard title="附件存储">
+          <Form
+            form={form}
+            initialValues={options}
+            onFinish={handleSubmit}
+            disabled={!isSysop}
+            layout="vertical"
+          >
+            {/* 默认存储平台选择器 */}
+            <ProFormSelect
+              name="default_storage_platform"
+              label="默认存储平台"
+              placeholder="请选择默认附件存储方式"
+              options={platformOptions}
+              rules={[{ required: true, message: '请选择默认存储平台' }]}
+              extra="上传附件时使用的存储平台，可同时配置多个平台的凭证"
+            />
+
+            {/* 动态存储平台列表 */}
+            <Form.List name="storage_platforms">
+              {(fields, { add, remove }) => (
+                <>
+                  {fields.map(({ key, name, ...restField }) => (
+                    <StoragePlatformEntry
+                      key={key}
+                      name={name}
+                      restField={restField}
+                      onRemove={() => remove(name)}
+                    />
+                  ))}
+
+                  {/* 添加按钮 */}
+                  <Button
+                    type="dashed"
+                    onClick={() => add({ type: 'vercel', name: '' })}
+                    block
+                    icon={<PlusOutlined />}
+                    style={{ marginBottom: 16 }}
+                    disabled={!isSysop}
+                  >
+                    添加存储配置
+                  </Button>
+                </>
+              )}
+            </Form.List>
+
+            {/* 保存按钮 */}
+            {isSysop && (
+              <Form.Item style={{ marginTop: 8 }}>
+                <Button
+                  type="primary"
+                  htmlType="submit"
+                  icon={<SaveOutlined />}
+                  loading={submitting}
+                >
+                  保存设置
+                </Button>
+              </Form.Item>
+            )}
+
+            <Alert
+              type="warning"
+              showIcon
+              style={{ marginTop: 16 }}
+              title="切换默认存储平台后，已存在的附件不会自动迁移"
+              description="可同时配置多个平台凭证，通过更换默认平台来切换。如果已有附件需要迁移，需编写数据迁移脚本。"
+            />
+          </Form>
+        </ProCard>
+        )}
       </Space>
     </PageContainer>
   );

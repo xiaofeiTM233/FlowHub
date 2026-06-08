@@ -2,6 +2,7 @@
 import Account from '@/models/accounts';
 import { biliPlus } from '@/lib/adapter/bili';
 import { qzonePlus } from '@/lib/adapter/qzone';
+import { getFile } from '@/lib/storage';
 
 /**
  * 将帖子发布到所有指定的平台
@@ -10,11 +11,16 @@ import { qzonePlus } from '@/lib/adapter/qzone';
  */
 export async function publish(post: any) {
   let results = post.results || {};
-  const content = post.content;
+  const content = { ...post.content };
 
   // 已发布则直接返回结果
   if (post.type === 'published') {
     return results;
+  }
+
+  // 图片引用 → base64（适配器仍使用 base64 上传）
+  if (content.images && content.images.length > 0) {
+    content.images = await getFile(content.images, 'base64');
   }
 
   // 遍历平台发布
