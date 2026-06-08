@@ -229,8 +229,12 @@ const OptionsEditPage: React.FC = () => {
         const response = await axios.get('/api/settings/options');
         if (response.data.code === 0) {
           const optionsData = response.data.data;
-          // storage_platforms 本身就是数组，直接作为表单初始值
-          setOptions(optionsData);
+          // 非 sysop 用户 API 不返回存储相关字段，前端兜底为空数组，防止 ProForm 内部 Object.entries(undefined)
+          const normalized = {
+            ...optionsData,
+            storage_platforms: optionsData.storage_platforms || [],
+          };
+          setOptions(normalized);
         } else {
           message.error(response.data.message || '获取设置失败');
           router.back();

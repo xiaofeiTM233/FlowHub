@@ -1,8 +1,11 @@
 // app/api/drafts/review/route.ts
 import { NextRequest, NextResponse } from "next/server";
+import path from 'path';
+import { readFile } from 'fs/promises';
 import { pushReview, getTags } from '@/lib/review';
 import { publish } from '@/lib/publish';
-import { resolveImages } from '@/lib/storage';
+import { resolveImages, saveFile } from '@/lib/storage';
+import { render } from '@/lib/renderer';
 import { authApi } from "@/lib/auth";
 import dbConnect from '@/lib/db';
 import Draft from '@/models/drafts';
@@ -252,6 +255,23 @@ export async function POST(request: NextRequest) {
           code: 0,
           message: `已重新推送投稿 ${draft._id}`,
           data: repush
+        }, { status: 200 });
+      case 'rerender': // 重新渲染
+        const templatePath = path.join(process.cwd(), 'models', 'template.html');
+        const renderTemplate = await readFile(templatePath, 'utf-8');
+        const renderData = { ...draft.content };
+        renderData.time = new Date(draft.timestamp + (8 * 60 * 60 * 1000)).toISOString().slice(0, 19).replace('T', ' ');
+        const renderResult = await render(renderTemplate, renderData, 'base64');
+        draft.images = [];
+        const renderBuffer = typeof renderResult === 'string' ? Buffer.from(renderResult, 'base64') : renderResult;
+        const renderAtt = await saveFile(`${draft._id}.png`, renderBuffer, 'png', 'renderer');
+        draft.images.push(renderAtt._id);
+        draft.review.comments.push({mid, reason, timestmap: Date.now()});
+        await draft.save();
+        return NextResponse.json({
+          code: 0,
+          message: `已重新渲染稿件 ${draft._id}`,
+          data: { images: draft.images }
         }, { status: 200 });
       case 'platform': // 修改推送平台
         draft.sender.platform = body.data.platform;

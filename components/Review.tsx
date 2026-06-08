@@ -11,7 +11,7 @@ interface ReviewStatusProps {
   status: 'pending' | 'approved' | 'rejected';
 }
 
-const Tags: React.FC<any> = ({ tags, platform = [] }) => {
+const Tags: React.FC<any> = ({ tags = {}, platform = [] }) => {
   if (platform.length > 0) {
     // 如果传入平台列表，直接转换成标签
     return (
