@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
     { aid },
     { platform, aid, auth, uid, cookies, stats },
     {
-      new: true,
+      returnDocument: 'after',
       upsert: true,
       setDefaultsOnInsert: true
     }

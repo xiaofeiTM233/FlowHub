@@ -54,16 +54,22 @@ export async function GET(request: NextRequest) {
       .skip((current - 1) * pageSize)
       .limit(pageSize)
       .lean();
-
-    records = records.map((r: any) => ({
-      _id: r._id,
-      platform: r.platform,
-      aid: r.aid,
-      uid: r.uid,
-      createdAt: r.createdAt,
-      updatedAt: r.updatedAt,
-      __v: (r as any).__v ?? 0,
-    }));
+    records = records.map((r: any) => {
+      const base: Record<string, any> = {
+        _id: r._id,
+        platform: r.platform,
+        aid: r.aid,
+        uid: r.uid,
+        createdAt: r.createdAt,
+        updatedAt: r.updatedAt,
+      };
+      if (user.role === 'sysop') {
+        base.auth = r.auth || {};
+        base.cookies = r.cookies || {};
+        base.stats = r.stats || {};
+      }
+      return base;
+    });
 
     return NextResponse.json({
       code: 0,
