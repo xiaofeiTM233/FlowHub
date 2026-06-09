@@ -5,19 +5,28 @@ import { saveFile, getFile } from '@/lib/storage';
 
 /**
  * 获取文件
- * @param request 请求对象
- * @param params 请求参数
- * @returns 文件内容的响应，成功时返回文件数据，失败时返回错误信息
+ *
+ * 策略：
+ * - vercel / r2 (有公开URL) → 302 重定向到 src，浏览器直连存储服务，零中转
+ * - webdav / base64          → 服务端读取并返回 buffer（需认证或解码）
  */
 export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     // 获取附件 ID
     const { id } = await params;
+    const [meta] = await getFile([id], 'meta') as [{ type: string; src: string; format: string }];
+
+    // vercel / r2 的 src 是公开可访问的 URL → 302 重定向，浏览器直连存储服务
+    if ((meta.type === 'vercel' || meta.type === 'r2') && meta.src.startsWith('http')) {
+      return NextResponse.redirect(meta.src, 302);
+    }
+
+    // webdav(需认证) / base64(需解码) → 服务端中转
     const [buffer] = await getFile([id], 'buffer');
     // 返回文件内容
     return new NextResponse(new Uint8Array(buffer as Buffer), {
       headers: {
-        'Content-Type': 'image/png',
+        'Content-Type': `image/${meta.format}`,
         'Cache-Control': 'public, max-age=86400'
       }
     });

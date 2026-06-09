@@ -80,12 +80,12 @@ export async function saveFile(
 /**
  * 按附件 ID 批量读取文件
  * @param ids 附件 ID 数组
- * @param format 输出格式：'src'(默认) / 'buffer' / 'base64'
+ * @param format 输出格式：'src'(默认) / 'buffer' / 'base64' / 'meta'
  */
 export async function getFile(
   ids: string[],
-  format: 'src' | 'buffer' | 'base64' = 'src'
-): Promise<(Buffer | string)[]> {
+  format: 'src' | 'buffer' | 'base64' | 'meta' = 'src'
+): Promise<(Buffer | string | { type: string; src: string; format: string })[]> {
   if (ids.length === 0) return [];
   await dbConnect();
   // 查询数据库
@@ -93,6 +93,10 @@ export async function getFile(
   const map = new Map(docs.map(d => [String(d._id), d]));
   for (const id of ids) if (!map.has(id)) throw new Error(`附件 ${id} 不存在`);
   if (format === 'src') return ids.map(id => map.get(id)!.src);
+  if (format === 'meta') return ids.map(id => {
+    const d = map.get(id)!;
+    return { type: d.type as string, src: d.src as string, format: d.format as string };
+  });
   // 需要读取文件内容，单次获取适配器实例
   const adapter = await getAdapter();
   return Promise.all(ids.map(async id => {
