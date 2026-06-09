@@ -43,6 +43,8 @@ const PostListPage: React.FC = () => {
   const [previewVisible, setPreviewVisible] = useState(false);
   const [previewImages, setPreviewImages] = useState<string[]>([]);
   const [previewCurrent, setPreviewCurrent] = useState<number>(0);
+  // 图片路径转换
+  const imgSrc = (id: string) => `/api/storage/${id}`;
   // 处理图片预览功能
   const handlePreview = (record: PostItem) => {
     const images = record.images || [];
@@ -50,7 +52,7 @@ const PostListPage: React.FC = () => {
       message.info('该帖子没有图片');
       return;
     }
-    const srcList = images.map((img: string) => img);
+    const srcList = images.map((id: string) => imgSrc(id));
     setPreviewImages(srcList);
     setPreviewCurrent(0);
     setPreviewVisible(true);
@@ -251,7 +253,7 @@ const PostListPage: React.FC = () => {
           <div
             style={{
               height: 200,
-              backgroundImage: `url(${record.images[0]})`,
+              backgroundImage: `url(${imgSrc(record.images[0])})`,
               backgroundSize: 'cover',
             }}
             onClick={() => handlePreview(record)}

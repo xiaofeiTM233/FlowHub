@@ -32,6 +32,7 @@ const PostEditPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [fileList, setFileList] = useState<UploadFile[]>([]);
+  const [uploading, setUploading] = useState(false);
 
   // 路由对象
   const router = useRouter();
@@ -47,55 +48,48 @@ const PostEditPage: React.FC = () => {
     },
   }) as { data: any, status: string };
 
-  /**
-   * 格式化 Base64 图片数据
-   * @param base64 - Base64 编码的图片数据
-   * @returns 完整的 data URL
-   */
-  const formatBase64 = (base64: string) => {
-    // 如果已经包含 http 前缀或 data: 前缀，直接返回
-    if (base64.startsWith('http') || base64.startsWith('data:')) {
-      return base64;
-    }
-    // 否则添加 base64 data 前缀
-    return `data:image/jpeg;base64,${base64}`;
-  };
+  /** 将附件 ID 转换为图片 URL */
+  const imgSrc = (id: string) => `/api/storage/${id}`;
 
   /**
-   * 将文件转换为base64
+   * 上传文件到存储后端
    */
-  const getBase64 = (file: File): Promise<string> =>
-    new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => resolve(reader.result as string);
-      reader.onerror = (error) => reject(error);
+  const uploadFile = async (file: File): Promise<string> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await axios.post('/api/storage', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
     });
+    if (response.data.code !== 0) {
+      throw new Error(response.data.message || '上传失败');
+    }
+    return response.data.data._id;
+  };
 
   /**
    * 处理图片变化
    */
-  const handleImageChange: UploadProps['onChange'] = async ({ fileList: newFileList }) => {
-    const processedFileList = await Promise.all(
-      newFileList.map(async (file) => {
-        if (file.originFileObj && !file.url) {
+  const handleImageChange: UploadProps['onChange'] = async ({ fileList: list }) => {
+    const files = await Promise.all(
+      (list as any[]).map(async (f: any) => {
+        if (f.originFileObj && !f.id) {
           try {
-            const base64 = await getBase64(file.originFileObj as File);
-            return {
-              ...file,
-              status: 'done' as const,
-              url: base64,
-              thumbUrl: base64,
-            };
-          } catch (error) {
-            console.error('转换图片为base64失败:', error);
-            return file;
+            setUploading(true);
+            const id = await uploadFile(f.originFileObj as File);
+            const url = `/api/storage/${id}`;
+            return { ...f, status: 'done' as const, url, thumbUrl: url, id };
+          } catch (error: any) {
+            console.error('上传图片失败:', error);
+            message.error(error.message || '上传失败');
+            return { ...f, status: 'error' as const };
+          } finally {
+            setUploading(false);
           }
         }
-        return file;
+        return f;
       })
     );
-    setFileList(processedFileList);
+    setFileList(files);
   };
 
   /**
@@ -110,16 +104,17 @@ const PostEditPage: React.FC = () => {
         if (response.data.code === 0) {
           const postData = response.data.data;
           setPost(postData);
-          // 如果有图片数据，设置fileList
+          // 如果有图片数据，设置 fileList
           if (postData.content?.images && Array.isArray(postData.content.images)) {
             const imageFileList = postData.content.images.map((img: string, index: number) => {
-              const formattedImg = formatBase64(img);
+              const formattedImg = imgSrc(img);
               return {
                 uid: `-${index}`,
                 name: `image-${index + 1}`,
                 status: 'done' as const,
                 url: formattedImg,
                 thumbUrl: formattedImg,
+                id: img,
               };
             });
             setFileList(imageFileList);
@@ -145,10 +140,10 @@ const PostEditPage: React.FC = () => {
   const handleSubmit = async (values: any) => {
     setSubmitting(true);
     try {
-      // 将图片数据添加到表单数据中
-      const images = fileList
-        .filter(file => file.status === 'done' && file.url)
-        .map(file => file.url as string);
+      // 提取图片附件 ID
+      const images = (fileList as any[])
+        .filter(file => file.status === 'done' && file.id)
+        .map(file => file.id);
       const submitData = {
         data: {
           ...values,
@@ -328,11 +323,10 @@ const PostEditPage: React.FC = () => {
                     (imageElements[currentIndex] as HTMLElement).click();
                   }
                 }}
-                beforeUpload={() => false} // 阻止自动上传
                 maxCount={8}
                 accept="image/*"
               >
-                {fileList.length >= 8 ? null : (
+                {fileList.length >= 8 || uploading ? null : (
                   <div>
                     <PlusOutlined />
                     <div style={{ marginTop: 8 }}>上传图片</div>

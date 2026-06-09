@@ -106,14 +106,14 @@ export async function getFile(
 }
 
 /** 删除附件记录及远程文件 */
-export async function delFile(attachmentId: string): Promise<void> {
+export async function delFile(id: string): Promise<void> {
   await dbConnect();
-  const doc = await Attachment.findById(attachmentId);
-  if (!doc) throw new Error(`附件 ${attachmentId} 不存在`);
+  const doc = await Attachment.findById(id);
+  if (!doc) throw new Error(`附件 ${id} 不存在`);
   const adapter = await getAdapter();
   // 先删远程文件，再删数据库记录
   await adapter.remove(doc.src);
-  await Attachment.findByIdAndDelete(attachmentId);
+  await Attachment.findByIdAndDelete(id);
 }
 
 // 重新导出类型和类
